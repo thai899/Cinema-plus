@@ -1,0 +1,31 @@
+@import 'tailwindcss';
+@plugin "@tailwindcss/aspect-ratio";
+@source './src/**/*.{js,jsx,ts,tsx}';
+
+@layer base {
+  * {
+    box-sizing: border-box !important;
+    margin: 0;
+    padding: 0;
+  }
+  body {
+    background-color: #131313 !important;
+    color: #e4e2e1;
+    min-height: 100vh;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+}
+
+/* Tối ưu thanh cuộn bảo vệ khung Terminal không bị méo */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #131313; }
+::-webkit-scrollbar-thumb { background: #4e4639; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #e9c176; }
+
+/* Lớp chống tràn văn bản tuyệt đối cho Audit Logs */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #4e4639 #131313;
+}

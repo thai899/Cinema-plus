@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+# Apache Maven Wrapper
+# Executes the embedded maven-wrapper JAR if present, otherwise falls back to system mvn.
+
+BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
+WRAPPER_JAR="$BASE_DIR/.mvn/wrapper/maven-wrapper.jar"
+
+if [ -f "$WRAPPER_JAR" ]; then
+  exec java -jar "$WRAPPER_JAR" "$@"
+else
+  echo "WARNING: maven-wrapper.jar not found in .mvn/wrapper — falling back to system 'mvn'"
+  exec mvn "$@"
+fi
