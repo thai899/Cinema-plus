@@ -29,3 +29,29 @@
   scrollbar-width: thin;
   scrollbar-color: #4e4639 #131313;
 }
+@theme {
+  /* 🟢 Định nghĩa hiệu ứng quét laser cho Tailwind v4 */
+  --animate-scan-line-huit: scan-line-huit 2.5s linear infinite;
+
+  @keyframes scan-line-huit {
+    0% { top: 0%; opacity: 0.3; }
+    50% { opacity: 1; }
+    100% { top: 100%; opacity: 0.3; }
+  }
+}
+
+/* Thêm tùy biến thanh cuộn mượt mà cho Nhật ký quét vé */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(233, 193, 118, 0.2);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(233, 193, 118, 0.4);
+}

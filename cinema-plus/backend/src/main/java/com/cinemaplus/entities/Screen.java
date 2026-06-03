@@ -2,11 +2,12 @@ package com.cinemaplus.entities;
 
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.List;
 
 @Entity
 @Table(name = "Rooms")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
-public class Room {
+public class Screen {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -15,7 +16,7 @@ public class Room {
     private String name;
 
     @Column(name = "total_seats", nullable = false)
-    private Integer totalSeats;
+    private Integer totalSeats = 0;
 
     @ManyToOne
     @JoinColumn(name = "cinema_id", nullable = false)
@@ -23,4 +24,7 @@ public class Room {
 
     @Column(length = 20)
     private String status = "AVAILABLE"; // AVAILABLE, MAINTENANCE
+
+    @OneToMany(mappedBy = "screen", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Seat> seats;
 }

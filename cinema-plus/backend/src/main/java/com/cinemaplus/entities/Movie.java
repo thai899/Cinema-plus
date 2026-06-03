@@ -42,6 +42,9 @@ public class Movie {
     @Column(length = 30)
     private String status = "NOW_SHOWING";
 
+    @Column(length = 20)
+    private String format = "2D"; // 2D, 3D, IMAX
+
     @ManyToMany
     @JoinTable(
         name = "Movie_Genre_Map",

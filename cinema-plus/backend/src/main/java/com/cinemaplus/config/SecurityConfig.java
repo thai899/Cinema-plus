@@ -1,5 +1,6 @@
 package com.cinemaplus.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -9,12 +10,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.servlet.config.annotation.*;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -29,13 +35,18 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/ws-cinema/**").permitAll() // Cho phép kết nối WebSocket không chặn JWT
+                .requestMatchers("/uploads/**").permitAll()  // Cho phép xem ảnh bìa phim công khai
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/manager/**").hasAuthority("ROLE_MANAGER")
                 .requestMatchers("/api/staff/**").hasAuthority("ROLE_STAFF")
                 .requestMatchers("/api/customer/**").hasAuthority("ROLE_CUSTOMER")
                 .anyRequest().authenticated()
             )
-            .headers(headers -> headers.frameOptions(fo -> fo.disable())); // allow H2 console iframes
+            .headers(headers -> headers.frameOptions(fo -> fo.disable())); // Cho phép iframe console nếu có
+
+        // Đính kèm bộ lọc kiểm định JWT trước bộ lọc mặc định của Spring
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -47,7 +58,7 @@ public class SecurityConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins("http://localhost:5173", "http://localhost:8080") 
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                         .allowedHeaders("*")
                         .allowCredentials(true);
             }

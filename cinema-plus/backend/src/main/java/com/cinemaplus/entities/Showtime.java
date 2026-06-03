@@ -19,7 +19,7 @@ public class Showtime {
 
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
-    private Room room;
+    private Screen screen;
 
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;

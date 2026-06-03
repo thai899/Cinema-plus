@@ -1,5 +1,6 @@
 package com.cinemaplus.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,9 +19,10 @@ public class Seat {
     private Integer seatNumber; // Ví dụ: 1, 2, 3...
 
     @Column(length = 20)
-    private String type = "NORMAL"; // NORMAL, VIP, COUPLE
+    private String type = "SINGLE"; // SINGLE, VIP, SWEETBOX_DOUBLE
 
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
-    private Room room;
+    @JsonIgnore
+    private Screen screen;
 }
