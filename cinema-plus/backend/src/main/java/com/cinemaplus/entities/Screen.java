@@ -1,5 +1,6 @@
 package com.cinemaplus.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -26,5 +27,6 @@ public class Screen {
     private String status = "AVAILABLE"; // AVAILABLE, MAINTENANCE
 
     @OneToMany(mappedBy = "screen", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Seat> seats;
 }

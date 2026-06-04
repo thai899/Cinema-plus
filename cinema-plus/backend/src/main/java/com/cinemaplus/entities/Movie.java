@@ -45,7 +45,7 @@ public class Movie {
     @Column(length = 20)
     private String format = "2D"; // 2D, 3D, IMAX
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "Movie_Genre_Map",
         joinColumns = @JoinColumn(name = "movie_id"),
