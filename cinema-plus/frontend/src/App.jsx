@@ -1,3 +1,4 @@
+import SeatSelectionPage from "./pages/customer/SeatSelectionPage";
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import HomePage from './pages/HomePage';
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
 
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/customer/seats" element={<SeatSelectionPage />}/>
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Các trang quản trị điều hành giữ nguyên bảo vệ Guard */}

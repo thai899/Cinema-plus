@@ -609,3 +609,11 @@ VALUES (202, @Seat2Id, 90000.00, 'TICKET_102_1', 0, NULL, 'TICKET_102_1', 102, '
 INSERT INTO Tickets (booking_id, seat_id, price, qr_code, is_checked_in, checked_in_at, qr_code_string, showtime_id, status, scanned_at)
 VALUES (203, @Seat3Id, 150000.00, 'TICKET_103_1', 0, NULL, 'TICKET_103_1', 103, 'VALID', NULL);
 GO
+CREATE TABLE SeatLocks(
+    id BIGINT IDENTITY(1,1) PRIMARY KEY,
+    showtime_id BIGINT NOT NULL,
+    seat_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    locked_at DATETIME NOT NULL,
+    expires_at DATETIME NOT NULL
+);
