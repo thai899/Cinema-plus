@@ -1,10 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
-import { Star, Ticket, Search, ChevronDown, ArrowRight, Bell, Play, Bookmark, CreditCard, Globe, Sliders } from 'lucide-react';
+import { Star, Ticket, Search, ChevronDown, ArrowRight, Bell, Play, Bookmark, CreditCard, Globe, Sliders, MapPin, Gift, Copy, X, Check } from 'lucide-react';
 
 export default function HomePage() {
   const navigate = useNavigate();
+  
+  // States for modals
+  const [isCinemaModalOpen, setIsCinemaModalOpen] = useState(false);
+  const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(3);
+  const [copiedCode, setCopiedCode] = useState(null);
+
+  const handleCopyCode = (code) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
   
   // Dữ liệu phim tĩnh dự phòng cấu trúc lưới
   const [movies] = useState([
@@ -145,7 +158,7 @@ export default function HomePage() {
       alert("Vui lòng đăng nhập trước khi tiến hành đặt vé!");
       return;
     }
-    alert(`Đang kích hoạt hệ thống giữ chỗ thời gian thực cho phim ID: ${movieId}`);
+    navigate(`/movie/${movieId}/showtimes`);
   };
 
   const handleLogout = () => {
@@ -164,8 +177,8 @@ export default function HomePage() {
             <Link to="/" className="text-2xl font-bold text-orange-300 uppercase tracking-wider font-serif">CINEMA PLUS</Link>
             <div className="hidden md:flex gap-8 items-center text-xs font-bold tracking-widest text-stone-300">
               <Link to="/" className="text-orange-300 border-b-2 border-orange-300 pb-1">PHIM</Link>
-              <a href="#" className="hover:text-orange-300 transition-colors">RẠP CHIẾU</a>
-              <a href="#" className="hover:text-orange-300 transition-colors">ƯU ĐẠI</a>
+              <button onClick={() => setIsCinemaModalOpen(true)} className="hover:text-orange-300 transition-colors cursor-pointer bg-transparent border-none text-xs font-bold tracking-widest text-stone-300 uppercase">RẠP CHIẾU</button>
+              <button onClick={() => setIsPromoModalOpen(true)} className="hover:text-orange-300 transition-colors cursor-pointer bg-transparent border-none text-xs font-bold tracking-widest text-stone-300 uppercase">ƯU ĐẠI</button>
             </div>
           </div>
 
@@ -177,7 +190,42 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="flex items-center gap-4">
-                <button className="text-stone-300 hover:text-orange-300 transition-colors cursor-pointer"><Bell size={20} /></button>
+                <div className="relative">
+                  <button onClick={() => { setIsNotificationOpen(!isNotificationOpen); setUnreadNotifications(0); }} className="text-stone-300 hover:text-orange-300 transition-colors cursor-pointer relative flex items-center justify-center p-1">
+                    <Bell size={20} />
+                    {unreadNotifications > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-[9px] w-4 h-4 flex items-center justify-center font-bold font-sans">
+                        {unreadNotifications}
+                      </span>
+                    )}
+                  </button>
+                  
+                  {isNotificationOpen && (
+                    <div className="absolute right-0 mt-3 w-80 bg-[#1f2020] border border-orange-300/20 rounded-xl shadow-2xl overflow-hidden z-50 text-left">
+                      <div className="bg-orange-300/10 border-b border-orange-300/10 px-4 py-3 flex justify-between items-center">
+                        <span className="text-xs font-bold text-orange-300 uppercase tracking-wider">Thông báo của bạn</span>
+                        <button onClick={() => setIsNotificationOpen(false)} className="text-[10px] text-stone-400 hover:text-white uppercase font-bold">Đóng</button>
+                      </div>
+                      <div className="divide-y divide-white/5 max-h-96 overflow-y-auto">
+                        <div className="p-4 hover:bg-white/5 transition-colors cursor-pointer">
+                          <span className="text-[9px] text-orange-300 font-bold uppercase tracking-wider block mb-1">Hội viên Gold</span>
+                          <p className="text-xs text-white font-semibold">Chào mừng bạn gia nhập câu lạc bộ thành viên VIP Gold!</p>
+                          <span className="text-[9px] text-stone-500 block mt-1 font-mono">Hôm nay</span>
+                        </div>
+                        <div className="p-4 hover:bg-white/5 transition-colors cursor-pointer">
+                          <span className="text-[9px] text-blue-400 font-bold uppercase tracking-wider block mb-1">Mở bán vé</span>
+                          <p className="text-xs text-white font-semibold">Suất chiếu bom tấn Oppenheimer đã chính thức mở bán!</p>
+                          <span className="text-[9px] text-stone-500 block mt-1 font-mono">Hôm qua</span>
+                        </div>
+                        <div className="p-4 hover:bg-white/5 transition-colors cursor-pointer">
+                          <span className="text-[9px] text-green-400 font-bold uppercase tracking-wider block mb-1">Ưu đãi sinh nhật</span>
+                          <p className="text-xs text-stone-300">Nhận ngay 1 phần bắp nước miễn phí nhân dịp sinh nhật của bạn vào tháng này!</p>
+                          <span className="text-[9px] text-stone-500 block mt-1 font-mono">3 ngày trước</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <div className="flex items-center gap-2 bg-orange-300/10 border border-orange-300/30 px-4 py-2 rounded-xl">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                   <span className="text-xs font-bold text-orange-300 uppercase font-mono">{username} (MEMBER)</span>
@@ -205,7 +253,7 @@ export default function HomePage() {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight font-serif">Experience<br />Cinema Like<br />Never Before</h1>
             <p className="text-stone-300 text-sm md:text-base max-w-xl leading-relaxed">Indulge in private screening luxury with 4K laser projection and immersive Dolby Atmos soundscapes designed for the ultimate cinephile.</p>
             <div className="flex flex-wrap items-center gap-4 pt-2">
-              <button onClick={() => alert("Vui lòng chọn phim ở danh mục bên dưới để đặt vé!")} className="bg-orange-300 text-yellow-950 font-bold px-8 py-4 rounded-xl hover:scale-105 transition-all flex items-center gap-2 shadow-lg text-sm tracking-wider cursor-pointer"><Ticket size={16} fill="currentColor" /> BOOK NOW</button>
+              <button onClick={() => document.getElementById('movies-selection')?.scrollIntoView({ behavior: 'smooth' })} className="bg-orange-300 text-yellow-950 font-bold px-8 py-4 rounded-xl hover:scale-105 transition-all flex items-center gap-2 shadow-lg text-sm tracking-wider cursor-pointer"><Ticket size={16} fill="currentColor" /> BOOK NOW</button>
             </div>
           </div>
 
@@ -240,7 +288,7 @@ export default function HomePage() {
                 </div>
                 
                 <div className="space-y-3">
-                  <button className="w-full bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl flex items-center justify-between text-left transition-all group cursor-pointer">
+                  <button onClick={() => navigate('/profile')} className="w-full bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl flex items-center justify-between text-left transition-all group cursor-pointer">
                     <div className="flex items-center gap-3">
                       <Bookmark className="text-orange-300" size={18} />
                       <div>
@@ -251,7 +299,7 @@ export default function HomePage() {
                     <ArrowRight size={14} className="text-stone-400 group-hover:translate-x-1 transition-transform" />
                   </button>
 
-                  <button className="w-full bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl flex items-center justify-between text-left transition-all group cursor-pointer">
+                  <button onClick={() => navigate('/profile')} className="w-full bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-xl flex items-center justify-between text-left transition-all group cursor-pointer">
                     <div className="flex items-center gap-3">
                       <CreditCard className="text-orange-300" size={18} />
                       <div>
@@ -297,7 +345,7 @@ export default function HomePage() {
       </section>
 
       {/* 🟢 KHỐI NOW SHOWING (PHIM ĐANG CHIẾU) */}
-      <section className="py-12 max-w-7xl mx-auto px-6 md:px-16 block relative z-10">
+      <section id="movies-selection" className="py-12 max-w-7xl mx-auto px-6 md:px-16 block relative z-10">
         <div className="flex justify-between items-end mb-8">
           <div className="space-y-2">
             <h2 className="text-3xl font-bold text-neutral-200 font-serif tracking-wide">Now Showing</h2>
@@ -400,6 +448,116 @@ export default function HomePage() {
           © 2026 CINEMA PLUS. EXCLUSIVE PRIVATE SCREENINGS. ALL RIGHTS RESERVED.
         </div>
       </footer>
+
+      {/* CINEMA MODAL */}
+      {isCinemaModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+          <div className="bg-[#1f2020] border border-orange-300/20 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl relative text-left">
+            <button onClick={() => setIsCinemaModalOpen(false)} className="absolute top-4 right-4 text-stone-400 hover:text-white transition-colors cursor-pointer">
+              <X size={24} />
+            </button>
+            <div className="p-8 space-y-6">
+              <div className="border-b border-orange-300/10 pb-4">
+                <span className="text-[10px] font-bold text-orange-300 uppercase tracking-widest block font-mono">HỆ THỐNG PHÒNG CHIẾU</span>
+                <h3 className="text-white text-3xl font-bold font-serif mt-1">Hệ thống Rạp Cinema Plus</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="bg-white/5 border border-white/5 p-6 rounded-xl space-y-3">
+                  <div className="flex justify-between items-start">
+                    <h4 className="text-lg font-bold text-orange-300 font-serif">Cinema Plus - Trường Chinh</h4>
+                    <span className="text-[10px] bg-green-400/15 text-green-400 px-2 py-1 rounded font-bold font-mono">ĐANG HOẠT ĐỘNG</span>
+                  </div>
+                  <p className="text-xs text-stone-300 flex items-center gap-2">
+                    <MapPin size={14} className="text-orange-300 flex-shrink-0" />
+                    140 Lê Trọng Tấn, Tây Thạnh, Tân Phú, TP. Hồ Chí Minh
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <span className="text-[9px] bg-white/10 px-2 py-1 rounded text-stone-300 font-bold font-mono">IMAX SCREEN</span>
+                    <span className="text-[9px] bg-white/10 px-2 py-1 rounded text-stone-300 font-bold font-mono">4DX ROOM</span>
+                    <span className="text-[9px] bg-white/10 px-2 py-1 rounded text-stone-300 font-bold font-mono">DOLBY ATMOS</span>
+                  </div>
+                </div>
+
+                <div className="bg-white/5 border border-white/5 p-6 rounded-xl space-y-3">
+                  <div className="flex justify-between items-start">
+                    <h4 className="text-lg font-bold text-orange-300 font-serif">Cinema Plus - Nguyễn Văn Cừ</h4>
+                    <span className="text-[10px] bg-green-400/15 text-green-400 px-2 py-1 rounded font-bold font-mono">ĐANG HOẠT ĐỘNG</span>
+                  </div>
+                  <p className="text-xs text-stone-300 flex items-center gap-2">
+                    <MapPin size={14} className="text-orange-300 flex-shrink-0" />
+                    235 Nguyễn Văn Cừ, Quận 5, TP. Hồ Chí Minh
+                  </p>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <span className="text-[9px] bg-white/10 px-2 py-1 rounded text-stone-300 font-bold font-mono">LUXURY SCREEN</span>
+                    <span className="text-[9px] bg-white/10 px-2 py-1 rounded text-stone-300 font-bold font-mono">LASER PROJECTION</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 border-t border-orange-300/10 pt-4">
+                <button onClick={() => setIsCinemaModalOpen(false)} className="px-6 py-2.5 rounded-xl border border-white/10 text-xs font-bold text-stone-300 hover:text-white uppercase transition-all cursor-pointer">Đóng</button>
+                <button onClick={() => { setIsCinemaModalOpen(false); document.getElementById('movies-selection')?.scrollIntoView({ behavior: 'smooth' }); }} className="px-6 py-2.5 rounded-xl bg-orange-300 text-yellow-950 text-xs font-bold hover:scale-105 transition-all uppercase shadow-md cursor-pointer">Đặt vé ngay</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PROMO MODAL */}
+      {isPromoModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+          <div className="bg-[#1f2020] border border-orange-300/20 rounded-2xl w-full max-w-xl max-h-[85vh] overflow-y-auto shadow-2xl relative text-left">
+            <button onClick={() => setIsPromoModalOpen(false)} className="absolute top-4 right-4 text-stone-400 hover:text-white transition-colors cursor-pointer">
+              <X size={24} />
+            </button>
+            <div className="p-8 space-y-6">
+              <div className="border-b border-orange-300/10 pb-4">
+                <span className="text-[10px] font-bold text-orange-300 uppercase tracking-widest block font-mono">CHƯƠNG TRÌNH KHUYẾN MÃI</span>
+                <h3 className="text-white text-3xl font-bold font-serif mt-1">Ưu Đãi Đặc Biệt</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="bg-gradient-to-r from-orange-300/10 to-yellow-500/5 border border-orange-300/20 p-5 rounded-xl flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[9px] bg-orange-300/20 text-orange-300 px-2 py-0.5 rounded font-bold uppercase font-mono">Đồng giá</span>
+                    <h4 className="text-base font-bold text-white font-serif">Thứ 2 Đồng Giá 50.000đ</h4>
+                    <p className="text-xs text-stone-400">Áp dụng cho mọi suất chiếu 2D vào ngày Thứ Hai.</p>
+                  </div>
+                  <button onClick={() => handleCopyCode('CPMONDAY')} className="bg-orange-300 hover:bg-orange-400 text-yellow-950 px-4 py-2 rounded-lg font-bold text-xs uppercase transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer">
+                    {copiedCode === 'CPMONDAY' ? <Check size={14} /> : <Copy size={14} />}
+                    {copiedCode === 'CPMONDAY' ? 'COPIED' : 'CPMONDAY'}
+                  </button>
+                </div>
+
+                <div className="bg-gradient-to-r from-orange-300/10 to-yellow-500/5 border border-orange-300/20 p-5 rounded-xl flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[9px] bg-orange-300/20 text-orange-300 px-2 py-0.5 rounded font-bold uppercase font-mono">Combo ẩm thực</span>
+                    <h4 className="text-base font-bold text-white font-serif">Giảm 20% Combo Bắp Nước</h4>
+                    <p className="text-xs text-stone-400">Giảm trực tiếp khi mua kèm combo online cùng vé phim.</p>
+                  </div>
+                  <button onClick={() => handleCopyCode('POPCON20')} className="bg-orange-300 hover:bg-orange-400 text-yellow-950 px-4 py-2 rounded-lg font-bold text-xs uppercase transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer">
+                    {copiedCode === 'POPCON20' ? <Check size={14} /> : <Copy size={14} />}
+                    {copiedCode === 'POPCON20' ? 'COPIED' : 'POPCON20'}
+                  </button>
+                </div>
+
+                <div className="bg-gradient-to-r from-orange-300/10 to-yellow-500/5 border border-orange-300/20 p-5 rounded-xl flex items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <span className="text-[9px] bg-orange-300/20 text-orange-300 px-2 py-0.5 rounded font-bold uppercase font-mono">Hội viên mới</span>
+                    <h4 className="text-base font-bold text-white font-serif">Chào Mừng Tân Hội Viên</h4>
+                    <p className="text-xs text-stone-400">Nhận ngay 450 điểm tích lũy sau khi hoàn thành tạo tài khoản.</p>
+                  </div>
+                  <button onClick={() => handleCopyCode('CPWELCOME')} className="bg-orange-300 hover:bg-orange-400 text-yellow-950 px-4 py-2 rounded-lg font-bold text-xs uppercase transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer">
+                    {copiedCode === 'CPWELCOME' ? <Check size={14} /> : <Copy size={14} />}
+                    {copiedCode === 'CPWELCOME' ? 'COPIED' : 'CPWELCOME'}
+                  </button>
+                </div>
+              </div>
+              <div className="flex justify-end pt-2">
+                <button onClick={() => setIsPromoModalOpen(false)} className="px-6 py-2.5 rounded-xl border border-white/10 text-xs font-bold text-stone-300 hover:text-white uppercase transition-all cursor-pointer">Đóng</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

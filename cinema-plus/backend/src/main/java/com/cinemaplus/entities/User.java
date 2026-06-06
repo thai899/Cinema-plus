@@ -34,6 +34,9 @@ public class User {
     @Column(length = 20)
     private String status = "ACTIVE";
 
+    @Column(name = "loyalty_points")
+    private Integer loyaltyPoints = 0;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 }

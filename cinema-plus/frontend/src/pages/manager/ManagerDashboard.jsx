@@ -1,22 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosClient from "../../api/axiosClient";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { 
   LayoutDashboard, Film, Ticket, Award, Settings, LogOut, Menu, Search, Bell, Plus,
-  TrendingUp, Utensils, Armchair, AlertTriangle, Monitor, Users, Printer 
+  TrendingUp, Utensils, Armchair, AlertTriangle, Monitor, Users, Printer, Calendar
 } from 'lucide-react';
 
 export default function ManagerDashboard() {
   const navigate = useNavigate();
   const managerName = localStorage.getItem('username') || 'Quản lý';
+  const token = localStorage.getItem('token');
   
-  // Trạng thái hoạt ảnh CSS
   const [animate, setAnimate] = useState(false);
+  const [revenuePeriod, setRevenuePeriod] = useState('daily');
+  const [revenueData, setRevenueData] = useState([]);
+  const [loadingRevenue, setLoadingRevenue] = useState(true);
 
   const [metrics, setMetrics] = useState({
-    ticketSales: '24,205',
-    fbRevenue: '8,122',
-    avgOccupancy: 78
+    ticketSales: '0',
+    todayRevenue: '0',
+    totalTickets: 0,
+    fbRevenue: '0',
+    avgOccupancy: 78,
+    apiTraffic: 0
   });
 
   const [inventory] = useState([
@@ -27,23 +33,83 @@ export default function ManagerDashboard() {
   ]);
 
   useEffect(() => {
-    const fetchManagerData = async () => {
-      try {
-        const metricsRes = await axiosClient.get('/api/manager/analytics');
-        if (metricsRes.data) setMetrics(metricsRes.data);
-      } catch (error) {
-        console.log("Đang sử dụng dữ liệu rạp phim giả lập phục vụ Test UI");
-      } finally {
-        // Sau khi nạp dữ liệu xong (kể cả lỗi), bật hoạt ảnh trồi mượt lên
-        setAnimate(true);
-      }
-    };
-    fetchManagerData();
+    fetchDashboard();
+    fetchRevenue(revenuePeriod);
   }, []);
+
+  useEffect(() => {
+    fetchRevenue(revenuePeriod);
+  }, [revenuePeriod]);
+
+  const fetchDashboard = async () => {
+    try {
+      const res = await fetch('http://localhost:8081/api/analytics/dashboard', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMetrics({
+          ticketSales: data.totalRevenue ? Number(data.totalRevenue).toLocaleString('vi-VN') : '0',
+          todayRevenue: data.todayRevenue ? Number(data.todayRevenue).toLocaleString('vi-VN') : '0',
+          totalTickets: data.totalTickets || 0,
+          fbRevenue: '0',
+          avgOccupancy: 78,
+          apiTraffic: data.apiTraffic || 0
+        });
+      }
+    } catch (error) {
+      console.log("Đang sử dụng dữ liệu giả lập");
+    } finally {
+      setAnimate(true);
+    }
+  };
+
+  const fetchRevenue = async (period) => {
+    setLoadingRevenue(true);
+    try {
+      const res = await fetch(`http://localhost:8081/api/analytics/revenue?period=${period}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRevenueData(data.map(d => ({
+          name: d.label,
+          revenue: Number(d.amount),
+          tickets: d.tickets
+        })));
+      }
+    } catch (e) {
+      console.error(e);
+      setRevenueData([]);
+    } finally {
+      setLoadingRevenue(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.clear();
     navigate('/login');
+  };
+
+  const formatVND = (value) => {
+    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'tr';
+    if (value >= 1000) return (value / 1000).toFixed(0) + 'K';
+    return value.toLocaleString();
+  };
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-[#1f2020] border border-[#e9c176]/30 rounded-xl p-3 shadow-2xl text-sm">
+          <p className="text-[#e9c176] font-bold mb-1">{label}</p>
+          <p className="text-white">Doanh thu: <span className="font-mono font-bold text-[#e9c176]">{Number(payload[0].value).toLocaleString('vi-VN')}đ</span></p>
+          {payload[0].payload.tickets !== undefined && (
+            <p className="text-[#a4c9ff]">Số vé: <span className="font-bold">{payload[0].payload.tickets}</span></p>
+          )}
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -119,7 +185,7 @@ export default function ManagerDashboard() {
         </div>
       </header>
 
-      {/* MAIN LAYOUT CANVAS */}
+      {/* MAIN */}
       <main 
         className="lg:ml-64 p-6 lg:p-8 space-y-8 max-w-7xl mx-auto transition-all duration-700"
         style={{
@@ -129,67 +195,145 @@ export default function ManagerDashboard() {
       >
         
         {/* KHỐI 1: REVENUE CARDS */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-[#353535]/40 backdrop-blur-xl border border-[#e9c176]/10 p-6 rounded-2xl relative overflow-hidden group shadow-lg">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-[#d1c5b4] text-xs font-bold uppercase tracking-wider">Doanh Thu Vé Xem Phim</p>
-                <h3 className="text-3xl font-bold text-white mt-1.5 font-mono">${metrics.ticketSales}</h3>
+                <p className="text-[#d1c5b4] text-xs font-bold uppercase tracking-wider">Tổng Doanh Thu</p>
+                <h3 className="text-3xl font-bold text-white mt-1.5 font-mono">{metrics.ticketSales}đ</h3>
                 <p className="text-green-400 text-xs mt-1.5 flex items-center font-medium">
-                  <TrendingUp size={14} className="mr-1" /> +12.4% so với tuần trước
+                  <TrendingUp size={14} className="mr-1" /> Cập nhật trực tiếp
                 </p>
               </div>
               <div className="p-3 rounded-xl bg-[#e9c176]/10 text-[#e9c176]">
                 <Ticket size={22} />
               </div>
             </div>
-            <div className="h-14 w-full flex items-end gap-1.5 pt-2">
-              {[30, 45, 25, 60, 40, 85, 75].map((h, i) => (
-                <div key={i} className="flex-1 bg-[#e9c176]/20 group-hover:bg-[#e9c176]/40 transition-all rounded-t-md" style={{ height: `${h}%` }}></div>
-              ))}
+          </div>
+
+          <div className="bg-[#353535]/40 backdrop-blur-xl border border-[#e9c176]/10 p-6 rounded-2xl relative overflow-hidden group shadow-lg">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <p className="text-[#d1c5b4] text-xs font-bold uppercase tracking-wider">Doanh Thu Hôm Nay</p>
+                <h3 className="text-3xl font-bold text-[#e9c176] mt-1.5 font-mono">{metrics.todayRevenue}đ</h3>
+                <p className="text-green-400 text-xs mt-1.5 flex items-center font-medium">
+                  <Calendar size={14} className="mr-1" /> {new Date().toLocaleDateString('vi-VN')}
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-green-500/10 text-green-400">
+                <TrendingUp size={22} />
+              </div>
             </div>
           </div>
 
           <div className="bg-[#353535]/40 backdrop-blur-xl border border-[#e9c176]/10 p-6 rounded-2xl relative overflow-hidden group shadow-lg">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-[#d1c5b4] text-xs font-bold uppercase tracking-wider">Doanh Thu Bỏng Nước (F&B)</p>
-                <h3 className="text-3xl font-bold text-white mt-1.5 font-mono">${metrics.fbRevenue}</h3>
+                <p className="text-[#d1c5b4] text-xs font-bold uppercase tracking-wider">Tổng Vé Đã Bán</p>
+                <h3 className="text-3xl font-bold text-white mt-1.5 font-mono">{metrics.totalTickets}</h3>
                 <p className="text-[#a4c9ff] text-xs mt-1.5 flex items-center font-medium">
-                  <TrendingUp size={14} className="mr-1" /> +4.1% so với tuần trước
+                  <Ticket size={14} className="mr-1" /> Toàn hệ thống
                 </p>
               </div>
               <div className="p-3 rounded-xl bg-[#a4c9ff]/10 text-[#a4c9ff]">
-                <Utensils size={22} />
+                <Armchair size={22} />
               </div>
-            </div>
-            <div className="h-14 w-full flex items-end gap-1.5 pt-2">
-              {[20, 55, 35, 42, 80, 50, 70].map((h, i) => (
-                <div key={i} className="flex-1 bg-[#a4c9ff]/20 group-hover:bg-[#a4c9ff]/40 transition-all rounded-t-md" style={{ height: `${h}%` }}></div>
-              ))}
             </div>
           </div>
 
           <div className="bg-[#353535]/40 backdrop-blur-xl border border-[#e9c176]/10 p-6 rounded-2xl relative overflow-hidden group shadow-lg">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <p className="text-[#d1c5b4] text-xs font-bold uppercase tracking-wider">Tỷ Lệ Ghế Có Khách Trung Bình</p>
-                <h3 className="text-3xl font-bold text-[#e9c176] mt-1.5 font-mono">{metrics.avgOccupancy}%</h3>
-                <p className="text-xs mt-2 font-medium text-[#d1c5b4]">Cao điểm hôm nay: <span className="text-[#e9c176] font-bold">94%</span> (Phòng 3)</p>
+                <p className="text-[#d1c5b4] text-xs font-bold uppercase tracking-wider">Lưu Lượng API</p>
+                <h3 className="text-3xl font-bold text-white mt-1.5 font-mono">{metrics.apiTraffic} reqs</h3>
+                <p className="text-[#a4c9ff] text-xs mt-1.5 flex items-center font-medium">
+                  <Monitor size={14} className="mr-1" /> Redis Tracking
+                </p>
               </div>
-              <div className="p-3 rounded-xl bg-[#e9c176]/10 text-[#e9c176]">
-                <Armchair size={22} />
+              <div className="p-3 rounded-xl bg-[#a4c9ff]/10 text-[#a4c9ff]">
+                <Monitor size={22} />
               </div>
-            </div>
-            <div className="h-14 w-full flex items-center justify-center pt-2">
-              <svg className="w-full h-8" viewBox="0 0 100 20">
-                <path d="M0 15 Q 10 5, 20 12 T 40 8 T 60 15 T 80 5 T 100 12" fill="none" stroke="#e9c176" strokeWidth="2.5"></path>
-              </svg>
             </div>
           </div>
         </section>
 
-        {/* KHỐI 2: TIMELINE GRID */}
+        {/* KHỐI 2: BIỂU ĐỒ DOANH THU THỰC */}
+        <section className="bg-[#353535]/40 backdrop-blur-xl border border-[#e9c176]/10 rounded-2xl overflow-hidden shadow-lg">
+          <div className="p-6 border-b border-[#4e4639]/20 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+              <h3 className="text-lg font-bold text-white font-serif tracking-wide flex items-center gap-2">
+                📊 Biểu Đồ Doanh Thu
+              </h3>
+              <p className="text-[#9a8f80] text-xs mt-0.5">
+                Dữ liệu thực từ cơ sở dữ liệu — cập nhật trực tiếp
+              </p>
+            </div>
+            <div className="flex bg-[#1f2020] rounded-xl p-1 border border-[#4e4639]/20">
+              <button 
+                onClick={() => setRevenuePeriod('daily')}
+                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${revenuePeriod === 'daily' ? 'bg-[#e9c176] text-[#261900]' : 'text-[#d1c5b4] hover:text-white'}`}
+              >
+                7 Ngày
+              </button>
+              <button 
+                onClick={() => setRevenuePeriod('weekly')}
+                className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${revenuePeriod === 'weekly' ? 'bg-[#e9c176] text-[#261900]' : 'text-[#d1c5b4] hover:text-white'}`}
+              >
+                4 Tuần
+              </button>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {loadingRevenue ? (
+              <div className="h-64 flex items-center justify-center">
+                <div className="w-8 h-8 border-3 border-[#e9c176] border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : revenueData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#e9c176" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#e9c176" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#4e4639" opacity={0.3} />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#9a8f80" 
+                    tick={{ fill: '#9a8f80', fontSize: 12 }}
+                    axisLine={{ stroke: '#4e4639' }}
+                  />
+                  <YAxis 
+                    stroke="#9a8f80" 
+                    tick={{ fill: '#9a8f80', fontSize: 12 }}
+                    tickFormatter={formatVND}
+                    axisLine={{ stroke: '#4e4639' }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    stroke="#e9c176" 
+                    strokeWidth={2.5}
+                    fill="url(#revenueGradient)" 
+                    dot={{ fill: '#e9c176', stroke: '#1f2020', strokeWidth: 2, r: 5 }}
+                    activeDot={{ fill: '#e9c176', stroke: '#fff', strokeWidth: 2, r: 7 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-64 flex flex-col items-center justify-center text-gray-500">
+                <p className="text-4xl mb-3">📉</p>
+                <p className="text-sm">Chưa có dữ liệu doanh thu cho khoảng thời gian này.</p>
+                <p className="text-xs mt-1">Hãy thử đặt vé để tạo dữ liệu.</p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* KHỐI 3: TIMELINE GRID */}
         <section className="bg-[#353535]/40 backdrop-blur-xl border border-[#e9c176]/10 rounded-2xl overflow-hidden shadow-lg">
           <div className="p-6 border-b border-[#4e4639]/20 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
@@ -275,7 +419,7 @@ export default function ManagerDashboard() {
           </div>
         </section>
 
-        {/* KHỐI 3: INVENTORY & QUICK ACTIONS */}
+        {/* KHỐI 4: INVENTORY & QUICK ACTIONS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <section className="bg-[#353535]/40 backdrop-blur-xl border border-[#e9c176]/10 p-6 rounded-2xl shadow-lg">
             <div className="flex justify-between items-center mb-6">
@@ -303,7 +447,7 @@ export default function ManagerDashboard() {
             </div>
           </section>
 
-          {/* QUICK ACTIONS BUTTONS */}
+          {/* QUICK ACTIONS */}
           <section className="grid grid-cols-2 gap-4">
             <button className="bg-[#353535]/40 border border-[#e9c176]/10 p-6 rounded-2xl flex flex-col items-center justify-center gap-3 hover:bg-[#e9c176]/10 transition-colors group cursor-pointer">
               <div className="w-12 h-12 rounded-xl bg-[#e9c176]/10 flex items-center justify-center text-[#e9c176] group-hover:scale-110 transition-transform">
@@ -321,7 +465,7 @@ export default function ManagerDashboard() {
               <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 group-hover:scale-110 transition-transform">
                 <AlertTriangle size={22} />
               </div>
-              <span className="text-sm font-bold text-white">Phát Cảnh Báo Khân</span>
+              <span className="text-sm font-bold text-white">Phát Cảnh Báo Khẩn</span>
             </button>
             <button className="bg-[#353535]/40 border border-[#e9c176]/10 p-6 rounded-2xl flex flex-col items-center justify-center gap-3 hover:bg-[#353535] transition-colors group cursor-pointer">
               <div className="w-12 h-12 rounded-xl bg-[#353535] flex items-center justify-center text-[#d1c5b4] group-hover:scale-110 transition-transform">
@@ -332,7 +476,7 @@ export default function ManagerDashboard() {
           </section>
         </div>
 
-        {/* KHỐI 4: LIVE SEAT DENSITY */}
+        {/* KHỐI 5: LIVE SEAT DENSITY */}
         <section className="bg-[#353535]/40 backdrop-blur-xl border border-[#e9c176]/10 p-6 md:p-8 rounded-2xl shadow-lg">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -398,7 +542,7 @@ export default function ManagerDashboard() {
 
       </main>
 
-      {/* MOBILE BOTTOM NAVIGATION BAR */}
+      {/* MOBILE BOTTOM NAV */}
       <nav className="fixed bottom-0 left-0 w-full lg:hidden bg-[#1f2020]/90 backdrop-blur-xl border-t border-[#4e4639]/30 shadow-lg flex justify-around items-center py-3 z-50 rounded-t-2xl">
         <a className="flex flex-col items-center justify-center text-[#e9c176] font-bold text-xs" href="#">
           <LayoutDashboard size={20} /> <span className="mt-1">Tổng Quan</span>
