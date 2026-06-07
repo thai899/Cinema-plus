@@ -897,7 +897,7 @@ export default function ManagerDashboard() {
                     <div className="relative aspect-[16/22] bg-[#1a1a1a] overflow-hidden flex items-center justify-center border-b border-[#4e4639]/30">
                       {movie.posterUrl ? (
                         <img 
-                          src={`http://localhost:8081${movie.posterUrl}`} 
+                          src={movie.posterUrl} 
                           alt={movie.title}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           onError={(e) => {
@@ -1136,9 +1136,9 @@ export default function ManagerDashboard() {
                   </thead>
                   <tbody className="divide-y divide-[#4e4639]/10 text-xs md:text-sm">
                     {showtimes.map(st => {
-                      const stDateStr = st.startTime.split('T')[0];
-                      const stTimeStr = st.startTime.split('T')[1].substring(0, 5);
-                      const enTimeStr = st.endTime.split('T')[1].substring(0, 5);
+                      const stDateStr = st.startTime ? st.startTime.split('T')[0] : '';
+                      const stTimeStr = (st.startTime && st.startTime.includes('T')) ? st.startTime.split('T')[1].substring(0, 5) : '';
+                      const enTimeStr = (st.endTime && st.endTime.includes('T')) ? st.endTime.split('T')[1].substring(0, 5) : '';
                       return (
                         <tr key={st.id} className="hover:bg-[#353535]/20 transition-colors">
                           <td className="px-6 py-4 font-mono font-bold text-[#e9c176]">{st.id}</td>
@@ -1195,7 +1195,7 @@ export default function ManagerDashboard() {
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center font-bold text-emerald-400 uppercase text-sm">
-                          {staff.username.substring(0, 2)}
+                          {(staff.username || '').substring(0, 2)}
                         </div>
                         <div>
                           <h4 className="font-bold text-white text-base font-sans leading-snug">{staff.fullName}</h4>
@@ -1359,7 +1359,7 @@ export default function ManagerDashboard() {
                 <div className="space-y-1.5 sm:col-span-2 border border-[#4e4639]/40 bg-[#131313]/25 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4">
                   <div className="w-20 h-28 bg-black/40 border border-[#4e4639]/50 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                     {movieForm.posterUrl ? (
-                      <img src={`http://localhost:8081${movieForm.posterUrl}`} alt="Preview" className="w-full h-full object-cover" />
+                      <img src={movieForm.posterUrl} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
                       <Image size={24} className="text-[#4e4639]" />
                     )}

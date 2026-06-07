@@ -144,7 +144,7 @@ export default function AdminDashboard() {
   // ==========================================
   const fetchUsers = async () => {
     try {
-      const res = await axiosClient.get('/api/admin/users');
+      const res = await axiosClient.get('/admin/users');
       if (res.data) setUsers(res.data);
     } catch (error) {
       console.error("Nạp dữ liệu tài khoản thất bại, sử dụng bản demo:", error);
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
 
   const fetchShowtimes = async () => {
     try {
-      const res = await axiosClient.get('/api/admin/showtimes');
+      const res = await axiosClient.get('/admin/showtimes');
       if (res.data) setShowtimes(res.data);
     } catch (error) {
       console.error("Nạp danh sách suất chiếu thất bại:", error);
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
 
   const fetchMovies = async () => {
     try {
-      const res = await axiosClient.get('/api/admin/movies');
+      const res = await axiosClient.get('/admin/movies');
       if (res.data) setMovies(res.data);
     } catch (error) {
       console.error("Nạp dữ liệu phim thất bại:", error);
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
 
   const fetchScreens = async () => {
     try {
-      const res = await axiosClient.get('/api/admin/screens');
+      const res = await axiosClient.get('/admin/screens');
       if (res.data) {
         setScreens(res.data);
         if (res.data.length > 0 && !selectedScreen) {
@@ -187,7 +187,7 @@ export default function AdminDashboard() {
   const toggleUserStatus = async (userId, currentStatus) => {
     const newStatus = currentStatus === 'ACTIVE' ? 'LOCKED' : 'ACTIVE';
     try {
-      await axiosClient.patch(`/api/admin/users/${userId}/status`, { status: newStatus });
+      await axiosClient.patch(`/admin/users/${userId}/status`, { status: newStatus });
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
     } catch (err) {
       alert("Cập nhật trạng thái người dùng thất bại! Đảm bảo quyền admin.");
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
   // Change user role
   const handleChangeRole = async (userId, newRole) => {
     try {
-      await axiosClient.put(`/api/admin/users/${userId}/role`, { roleName: newRole });
+      await axiosClient.put(`/admin/users/${userId}/role`, { roleName: newRole });
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: { name: newRole } } : u));
       setChangingRole(null);
     } catch (err) {
@@ -209,7 +209,7 @@ export default function AdminDashboard() {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
-      await axiosClient.post('/api/admin/users', newUserForm);
+      await axiosClient.post('/admin/users', newUserForm);
       alert(`✅ Tạo tài khoản ${newUserForm.username} (${newUserForm.roleName}) thành công!`);
       setShowCreateUserModal(false);
       setNewUserForm({ username: '', password: '', email: '', fullName: '', phone: '', roleName: 'ROLE_STAFF' });
@@ -229,7 +229,7 @@ export default function AdminDashboard() {
         startTime: showtimeForm.startTime,   // ISO string from datetime-local
         basePrice: parseFloat(showtimeForm.basePrice)
       };
-      await axiosClient.post('/api/admin/showtimes', payload);
+      await axiosClient.post('/admin/showtimes', payload);
       alert('✅ Tạo suất chiếu thành công!');
       setShowAddShowtimeModal(false);
       setShowtimeForm({ movieId: '', screenId: '', startTime: '', basePrice: '' });
@@ -242,7 +242,7 @@ export default function AdminDashboard() {
   const handleDeleteShowtime = async (id) => {
     if (!window.confirm('Bạn có chắc muốn xóa suất chiếu này?')) return;
     try {
-      await axiosClient.delete(`/api/admin/showtimes/${id}`);
+      await axiosClient.delete(`/admin/showtimes/${id}`);
       setShowtimes(prev => prev.filter(s => s.id !== id));
     } catch (err) {
       alert(err.response?.data?.error || 'Không thể xóa suất chiếu này!');
@@ -295,7 +295,7 @@ export default function AdminDashboard() {
 
     setUploadingPoster(true);
     try {
-      const res = await axiosClient.post('/api/admin/movies/upload', formData, {
+      const res = await axiosClient.post('/admin/movies/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -315,11 +315,11 @@ export default function AdminDashboard() {
     try {
       if (editingMovie) {
         // Edit movie
-        const res = await axiosClient.put(`/api/admin/movies/${editingMovie.id}`, movieForm);
+        const res = await axiosClient.put(`/admin/movies/${editingMovie.id}`, movieForm);
         setMovies(prev => prev.map(m => m.id === editingMovie.id ? res.data : m));
       } else {
         // Add new movie
-        const res = await axiosClient.post('/api/admin/movies', movieForm);
+        const res = await axiosClient.post('/admin/movies', movieForm);
         setMovies(prev => [...prev, res.data]);
       }
       setShowMovieModal(false);
@@ -332,7 +332,7 @@ export default function AdminDashboard() {
   const handleDeleteMovie = async (movieId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa bộ phim này khỏi hệ thống chiếu?")) return;
     try {
-      await axiosClient.delete(`/api/admin/movies/${movieId}`);
+      await axiosClient.delete(`/admin/movies/${movieId}`);
       setMovies(prev => prev.filter(m => m.id !== movieId));
       fetchUsers(); // Refresh audit logs trigger
     } catch (err) {
@@ -346,7 +346,7 @@ export default function AdminDashboard() {
   const handleSelectScreen = async (screen) => {
     setSelectedScreen(screen);
     try {
-      const res = await axiosClient.get(`/api/admin/screens/${screen.id}/seats`);
+      const res = await axiosClient.get(`/admin/screens/${screen.id}/seats`);
       if (res.data) {
         setSeats(res.data);
       }
@@ -366,7 +366,7 @@ export default function AdminDashboard() {
         cinema: { id: selectedCinemaId },
         status: 'AVAILABLE'
       };
-      const res = await axiosClient.post('/api/admin/screens', payload);
+      const res = await axiosClient.post('/admin/screens', payload);
       setScreens(prev => [...prev, res.data]);
       setSelectedScreen(res.data);
       setSeats([]);
@@ -381,11 +381,11 @@ export default function AdminDashboard() {
   const handleGenerateSeatMatrix = async (screenId) => {
     setGeneratingSeats(true);
     try {
-      await axiosClient.post(`/api/admin/screens/${screenId}/generate-seats`);
+      await axiosClient.post(`/admin/screens/${screenId}/generate-seats`);
       alert("Tạo ma trận 90 ghế theo sơ đồ (SINGLE, VIP, SWEETBOX_DOUBLE) thành công!");
       fetchScreens(); // reload total_seats count
       // Refresh current seats
-      const res = await axiosClient.get(`/api/admin/screens/${screenId}/seats`);
+      const res = await axiosClient.get(`/admin/screens/${screenId}/seats`);
       if (res.data) setSeats(res.data);
       fetchUsers(); // Triggers live audit logs
     } catch (err) {
@@ -613,7 +613,7 @@ export default function AdminDashboard() {
                             <td className="px-6 py-3.5">
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-lg bg-[#e9c176]/10 border border-[#e9c176]/20 flex items-center justify-center font-bold text-[#e9c176] text-[10px] uppercase shrink-0">
-                                  {user.username.substring(0, 2)}
+                                  {(user.username || '').substring(0, 2)}
                                 </div>
                                 <div className="flex flex-col min-w-0">
                                   <span className="font-bold text-white truncate">{user.fullName}</span>
@@ -628,20 +628,20 @@ export default function AdminDashboard() {
                                 user.role?.name === 'ROLE_STAFF' || user.role === 'ROLE_STAFF' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
                                 'bg-[#353535] text-[#d1c5b4]'
                               }`}>
-                                {typeof user.role === 'object' ? user.role.name.replace('ROLE_', '') : user.role.replace('ROLE_', '')}
+                                {user.role ? (typeof user.role === 'object' ? (user.role.name || '').replace('ROLE_', '') : (user.role || '').replace('ROLE_', '')) : 'CUSTOMER'}
                               </span>
                             </td>
                             <td className="px-6 py-3.5">
                               <div className="flex items-center gap-1.5">
-                                <span className={`w-1.5 h-1.5 rounded-full ${"ACTIVE".equalsIgnoreCase(user.status) ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]' : 'bg-red-500 animate-pulse'}`}></span>
-                                <span className="text-xs font-medium">{"ACTIVE".equalsIgnoreCase(user.status) ? 'Hoạt động' : 'Đã Khóa'}</span>
+                                <span className={`w-1.5 h-1.5 rounded-full ${user.status?.toUpperCase() === 'ACTIVE' ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]' : 'bg-red-500 animate-pulse'}`}></span>
+                                <span className="text-xs font-medium">{user.status?.toUpperCase() === 'ACTIVE' ? 'Hoạt động' : 'Đã Khóa'}</span>
                               </div>
                             </td>
                             <td className="px-6 py-3.5 text-center">
                               {changingRole === user.id ? (
                                 <select
                                   className="bg-[#131313] border border-[#e9c176]/40 text-[#e9c176] text-[10px] rounded-lg px-2 py-1 outline-none"
-                                  defaultValue={typeof user.role === 'object' ? user.role.name : user.role}
+                                  defaultValue={user.role ? (typeof user.role === 'object' ? user.role.name : user.role) : 'ROLE_CUSTOMER'}
                                   onChange={(e) => handleChangeRole(user.id, e.target.value)}
                                   onBlur={() => setChangingRole(null)}
                                   autoFocus
@@ -664,12 +664,12 @@ export default function AdminDashboard() {
                               <button 
                                 onClick={() => toggleUserStatus(user.id, user.status)} 
                                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-colors flex items-center justify-center gap-1 mx-auto cursor-pointer ${
-                                  "ACTIVE".equalsIgnoreCase(user.status)
+                                  user.status?.toUpperCase() === 'ACTIVE'
                                     ? 'border-red-500/30 text-red-400 bg-red-500/5 hover:bg-red-500/20'
                                     : 'border-[#e9c176]/30 text-[#e9c176] bg-[#e9c176]/5 hover:bg-[#e9c176]/20'
                                 }`}
                               >
-                                {"ACTIVE".equalsIgnoreCase(user.status) ? (
+                                {user.status?.toUpperCase() === 'ACTIVE' ? (
                                   <><Lock size={10} /> KHÓA ACC</>
                                 ) : (
                                   <><Unlock size={10} /> MỞ ACC</>
@@ -739,7 +739,7 @@ export default function AdminDashboard() {
                     <div className="relative aspect-[16/22] bg-[#1a1a1a] overflow-hidden flex items-center justify-center border-b border-[#4e4639]/30">
                       {movie.posterUrl ? (
                         <img 
-                          src={`http://localhost:8081${movie.posterUrl}`} 
+                          src={movie.posterUrl} 
                           alt={movie.title}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           onError={(e) => {
@@ -956,6 +956,145 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {/* ==================== TAB 4: QUẢN LÝ SUẤT CHIẾU ==================== */}
+          {activeTab === 'showtimes' && (
+            <section className="bg-[#1f2020] border border-[#4e4639]/30 rounded-2xl p-6 shadow-xl flex flex-col">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#4e4639]/20 pb-5 gap-4 mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-white font-serif tracking-wide">Quản Lý & Phân Bổ Suất Chiếu</h3>
+                  <p className="text-xs text-[#9a8f80] mt-0.5">Xây dựng khung giờ chiếu cho các phòng rạp, hệ thống tự động kiểm tra trùng lịch</p>
+                </div>
+                <button 
+                  onClick={() => setShowAddShowtimeModal(true)}
+                  className="bg-[#e9c176] text-[#261900] font-bold rounded-xl px-4 py-2.5 text-xs hover:bg-[#d9b166] cursor-pointer transition-all flex items-center gap-1.5"
+                >
+                  <Plus size={14} /> TẠO SUẤT CHIẾU MỚI
+                </button>
+              </div>
+
+              {/* SHOWTIMES TABLE LIST */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[700px]">
+                  <thead>
+                    <tr className="bg-[#131313]/50 text-[#9a8f80] text-[10px] uppercase tracking-wider font-bold border-b border-[#4e4639]/20">
+                      <th className="px-6 py-4">Mã Suất</th>
+                      <th className="px-6 py-4">Tên Phim</th>
+                      <th className="px-6 py-4">Phòng Chiếu</th>
+                      <th className="px-6 py-4">Thời Gian</th>
+                      <th className="px-6 py-4">Giá Vé Cơ Bản</th>
+                      <th className="px-6 py-4 text-center">Thao Tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#4e4639]/10 text-xs md:text-sm">
+                    {showtimes.map(st => {
+                      const stDateStr = st.startTime ? st.startTime.split('T')[0] : '';
+                      const stTimeStr = (st.startTime && st.startTime.includes('T')) ? st.startTime.split('T')[1].substring(0, 5) : '';
+                      const enTimeStr = (st.endTime && st.endTime.includes('T')) ? st.endTime.split('T')[1].substring(0, 5) : '';
+                      return (
+                        <tr key={st.id} className="hover:bg-[#353535]/20 transition-colors">
+                          <td className="px-6 py-4 font-mono font-bold text-[#e9c176]">{st.id}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-white">{st.movieTitle}</span>
+                              <span className="text-[10px] text-[#9a8f80] mt-0.5 font-mono">{st.movieFormat} · {st.duration} Phút</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-semibold text-stone-200">{st.screenName}</span>
+                          </td>
+                          <td className="px-6 py-4 font-mono">
+                            <div className="flex flex-col">
+                              <span className="text-white font-semibold">{stTimeStr} - {enTimeStr}</span>
+                              <span className="text-[10px] text-[#9a8f80] mt-0.5">{stDateStr}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 font-mono text-white font-bold">{Number(st.basePrice).toLocaleString()}đ</td>
+                          <td className="px-6 py-4 text-center">
+                            <button 
+                              onClick={() => handleDeleteShowtime(st.id)}
+                              className="border border-red-500/20 text-red-400 hover:bg-red-500/10 rounded-lg p-2 cursor-pointer transition-all inline-flex items-center"
+                              title="Xóa suất chiếu"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {showtimes.length === 0 && (
+                      <tr>
+                        <td colSpan="6" className="text-center py-8 text-[#9a8f80] italic">Chưa có lịch trình suất chiếu nào được tạo</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          )}
+
+          {/* ==================== TAB 5: DANH SÁCH NHÂN SỰ ==================== */}
+          {activeTab === 'staff' && (
+            <section className="bg-[#1f2020] border border-[#4e4639]/30 rounded-2xl p-6 shadow-xl flex flex-col">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-[#4e4639]/20 pb-5 gap-4 mb-6">
+                <div>
+                  <h3 className="text-lg font-bold text-white font-serif tracking-wide">Nhân Sự Quầy Vé (Staff Network)</h3>
+                  <p className="text-xs text-[#9a8f80] mt-0.5">Danh sách các tài khoản kiểm vé & hỗ trợ tại quầy rạp chiếu</p>
+                </div>
+                <button 
+                  onClick={() => setShowCreateUserModal(true)}
+                  className="bg-[#e9c176] text-[#261900] font-bold rounded-xl px-4 py-2.5 text-xs hover:bg-[#d9b166] cursor-pointer transition-all flex items-center gap-1.5"
+                >
+                  <Plus size={14} /> TẠO NHÂN SỰ MỚI
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {users.filter(u => {
+                  const roleName = (u.role && typeof u.role === 'object') ? u.role.name : (u.role || '');
+                  return roleName === 'ROLE_STAFF' || roleName === 'ROLE_MANAGER';
+                }).map(staff => {
+                  const roleName = (staff.role && typeof staff.role === 'object') ? staff.role.name : (staff.role || '');
+                  return (
+                    <div key={staff.id} className="bg-[#131313]/60 border border-[#4e4639]/30 rounded-2xl p-5 flex flex-col gap-4 relative overflow-hidden group shadow-lg">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center font-bold text-emerald-400 uppercase text-sm">
+                            {(staff.username || '').substring(0, 2)}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-white text-base font-sans leading-snug">{staff.fullName}</h4>
+                            <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block mt-0.5">
+                              {roleName === 'ROLE_MANAGER' ? 'Quản Lý Rạp' : 'Nhân Viên Quầy Vé'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={`flex items-center gap-1 border px-2 py-0.5 rounded text-[10px] font-bold ${
+                          staff.status?.toUpperCase() === 'ACTIVE'
+                            ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
+                            : 'bg-red-500/15 border-red-500/30 text-red-400'
+                        }`}>
+                          <ShieldCheck size={10} /> {staff.status?.toUpperCase() === 'ACTIVE' ? 'Active' : 'Locked'}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5 text-xs text-[#d1c5b4] border-t border-[#4e4639]/20 pt-4 font-medium">
+                        <p className="flex justify-between"><span className="text-[#9a8f80]">Tên Đăng Nhập:</span> <span className="font-mono text-white">{staff.username}</span></p>
+                        <p className="flex justify-between"><span className="text-[#9a8f80]">Hòm Thư:</span> <span className="text-stone-300 font-mono select-all truncate max-w-[170px]">{staff.email}</span></p>
+                        <p className="flex justify-between"><span className="text-[#9a8f80]">Điện thoại:</span> <span className="font-mono text-white">{staff.phone || 'Chưa cung cấp'}</span></p>
+                      </div>
+                    </div>
+                  );
+                })}
+                {users.filter(u => {
+                  const roleName = (u.role && typeof u.role === 'object') ? u.role.name : (u.role || '');
+                  return roleName === 'ROLE_STAFF' || roleName === 'ROLE_MANAGER';
+                }).length === 0 && (
+                  <div className="col-span-full text-center py-8 text-[#9a8f80] italic">Không có tài khoản nhân viên nào trên hệ thống</div>
+                )}
+              </div>
+            </section>
+          )}
+
         </div>
 
         {/* FOOTER */}
@@ -1109,7 +1248,7 @@ export default function AdminDashboard() {
                   <div className="w-20 h-28 bg-black/40 border border-[#4e4639]/50 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                     {movieForm.posterUrl ? (
                       <img 
-                        src={`http://localhost:8081${movieForm.posterUrl}`} 
+                        src={movieForm.posterUrl} 
                         alt="Preview" 
                         className="w-full h-full object-cover"
                       />

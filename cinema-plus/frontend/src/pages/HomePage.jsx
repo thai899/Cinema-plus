@@ -78,7 +78,7 @@ export default function HomePage() {
   useEffect(() => {
     const loadMovies = async () => {
       try {
-        const res = await axiosClient.get('/api/movies');
+        const res = await axiosClient.get('/movies');
         if (res.data && res.data.length > 0) setMovies(res.data);
       } catch {
         // Giữ fallback data tĩnh nếu backend chưa sẵn sàng
@@ -99,7 +99,7 @@ export default function HomePage() {
 
     setAuthLoading(true);
     try {
-      const response = await axiosClient.post('/api/auth/login', {
+      const response = await axiosClient.post('/auth/login', {
         username: loginUsername,
         password: loginPassword
       });

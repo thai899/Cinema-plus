@@ -38,8 +38,8 @@ export default function ProfilePage() {
 
   useEffect(() => {
     Promise.all([
-      axiosClient.get('/api/users/profile').then(r => setProfile(r.data)).catch(() => {}),
-      axiosClient.get('/api/users/bookings').then(r => setBookings(r.data || [])).catch(() => {}),
+      axiosClient.get('/users/profile').then(r => setProfile(r.data)).catch(() => {}),
+      axiosClient.get('/users/bookings').then(r => setBookings(r.data || [])).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, []);
 

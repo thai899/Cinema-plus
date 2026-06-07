@@ -25,8 +25,8 @@ export default function ShowtimeSelectionPage() {
         setShowtimes(data);
         if (data.length > 0) {
           // Khởi tạo ngày được chọn là ngày đầu tiên có suất chiếu
-          const dates = [...new Set(data.map(st => st.startTime.split('T')[0]))].sort();
-          setSelectedDate(dates[0]);
+          const dates = [...new Set(data.map(st => st.startTime ? st.startTime.split('T')[0] : ''))].filter(Boolean).sort();
+          setSelectedDate(dates[0] || '');
         }
       }
     } catch (e) {
@@ -49,13 +49,13 @@ export default function ShowtimeSelectionPage() {
 
   // Lấy danh sách các ngày có suất chiếu
   const availableDates = useMemo(() => {
-    const dates = [...new Set(showtimes.map(st => st.startTime.split('T')[0]))];
+    const dates = [...new Set(showtimes.map(st => st.startTime ? st.startTime.split('T')[0] : ''))].filter(Boolean);
     return dates.sort();
   }, [showtimes]);
 
   // Nhóm các suất chiếu theo Rạp (Cinema) trong ngày đang được chọn
   const showtimesByCinema = useMemo(() => {
-    const filtered = showtimes.filter(st => st.startTime.startsWith(selectedDate));
+    const filtered = showtimes.filter(st => st.startTime && st.startTime.startsWith(selectedDate));
     const grouped = {};
     filtered.forEach(st => {
       if (!grouped[st.cinemaId]) {
@@ -69,7 +69,7 @@ export default function ShowtimeSelectionPage() {
     });
     // Sắp xếp các suất chiếu trong Rạp theo thời gian
     Object.values(grouped).forEach(cinema => {
-      cinema.showtimes.sort((a, b) => a.startTime.localeCompare(b.startTime));
+      cinema.showtimes.sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
     });
     return grouped;
   }, [showtimes, selectedDate]);

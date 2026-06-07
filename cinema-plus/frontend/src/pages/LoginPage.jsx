@@ -25,7 +25,7 @@ const LoginPage = () => {
       if (role === 'ROLE_ADMIN') navigate('/admin-dashboard');
       else if (role === 'ROLE_MANAGER') navigate('/manager-dashboard');
       else if (role === 'ROLE_STAFF') navigate('/staff-scanner');
-      else navigate('/customer-profile');
+      else navigate('/profile');
 
     } catch (err) {
       setError(err.response?.data || 'Đăng nhập thất bại, hãy thử lại!');

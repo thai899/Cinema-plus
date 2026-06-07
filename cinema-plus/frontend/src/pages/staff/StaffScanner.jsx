@@ -58,7 +58,7 @@ export default function StaffScanner() {
   const fetchTodaySchedule = useCallback(async () => {
     setScheduleLoading(true);
     try {
-      const res = await axiosClient.get('/api/staff/showtimes/today');
+      const res = await axiosClient.get('/staff/showtimes/today');
       setSchedule(res.data || []);
       // Auto-select suất đang diễn ra hoặc đầu tiên trong ngày
       if (res.data && res.data.length > 0) {
@@ -189,7 +189,7 @@ export default function StaffScanner() {
     }
 
     try {
-      const res = await axiosClient.post('/api/staff/verify-ticket', {
+      const res = await axiosClient.post('/staff/verify-ticket', {
         qrData: decodedText,
         currentShowtimeId: selectedShowtime.id
       });

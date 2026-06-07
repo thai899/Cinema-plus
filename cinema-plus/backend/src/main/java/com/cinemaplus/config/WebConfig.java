@@ -21,7 +21,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Cấu hình để khi UI gọi /uploads/movies/abc.jpg sẽ map thẳng vào thư mục 'uploads/movies/' trên Server
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/");
+                .addResourceLocations("file:uploads/", "file:cinema-plus/backend/uploads/");
     }
 
     @org.springframework.beans.factory.annotation.Autowired
