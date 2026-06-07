@@ -27,7 +27,7 @@ public class SeatLockController {
                 service.lockSeat(
                         Long.valueOf(body.get("showtimeId").toString()),
                         Long.valueOf(body.get("seatId").toString()),
-                        Long.valueOf(body.get("userId").toString())
+                        body.get("userId").toString()
                 );
 
         return Map.of(

@@ -38,7 +38,10 @@ public class SecurityConfig {
                 .requestMatchers("/ws-cinema/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/movies/**").permitAll()                          // Public: danh sách phim
-                .requestMatchers("/api/admin/movies/**").hasAuthority("ROLE_ADMIN")     // Admin: CRUD phim
+                .requestMatchers("/api/admin/movies/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")     // Admin/Manager: CRUD phim
+                .requestMatchers("/api/admin/showtimes/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")  // Admin/Manager: CRUD showtimes
+                .requestMatchers("/api/admin/screens/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")    // Admin/Manager: CRUD screens
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/admin/users/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER") // Manager can view staff
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/showtimes/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")

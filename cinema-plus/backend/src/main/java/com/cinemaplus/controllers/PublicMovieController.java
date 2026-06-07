@@ -35,7 +35,7 @@ public class PublicMovieController {
             dto.put("title",       m.getTitle());
             dto.put("format",      m.getFormat());
             dto.put("duration",    m.getDuration());
-            dto.put("ageLimit",    m.getAgeLimit());
+            dto.put("ageLimit",    m.getAgeRating());
             dto.put("posterUrl",   m.getPosterUrl() != null ? m.getPosterUrl() : "");
             dto.put("description", m.getDescription() != null ? m.getDescription() : "");
             return dto;
@@ -54,7 +54,7 @@ public class PublicMovieController {
         dto.put("title",       m.getTitle());
         dto.put("format",      m.getFormat());
         dto.put("duration",    m.getDuration());
-        dto.put("ageLimit",    m.getAgeLimit());
+        dto.put("ageLimit",    m.getAgeRating());
         dto.put("posterUrl",   m.getPosterUrl() != null ? m.getPosterUrl() : "");
         dto.put("description", m.getDescription() != null ? m.getDescription() : "");
         return ResponseEntity.ok(dto);
