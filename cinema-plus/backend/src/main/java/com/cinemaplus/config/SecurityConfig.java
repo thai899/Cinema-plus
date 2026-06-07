@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/manager/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
                 .requestMatchers("/api/analytics/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/staff/showtimes/**").hasAnyAuthority("ROLE_STAFF", "ROLE_ADMIN", "ROLE_MANAGER")
                 .requestMatchers("/api/staff/**").hasAuthority("ROLE_STAFF")
                 .requestMatchers("/api/customer/**").hasAuthority("ROLE_CUSTOMER")
                 .anyRequest().authenticated()

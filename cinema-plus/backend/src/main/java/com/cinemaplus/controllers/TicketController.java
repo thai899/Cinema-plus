@@ -1,21 +1,24 @@
 package com.cinemaplus.controllers;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
+import com.cinemaplus.entities.Showtime;
 import com.cinemaplus.entities.Ticket;
-import com.cinemaplus.repositories.TicketRepository;
 import com.cinemaplus.entities.TicketStatus;
+import com.cinemaplus.repositories.ShowtimeRepository;
+import com.cinemaplus.repositories.TicketRepository;
 
 @RestController
 @RequestMapping("/api/staff")
@@ -26,7 +29,45 @@ public class TicketController {
     private TicketRepository ticketRepository;
 
     @Autowired
-    private SimpMessagingTemplate messagingTemplate; // Đối tượng dùng để đẩy socket sang UI
+    private ShowtimeRepository showtimeRepository;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+    /**
+     * GET /api/staff/showtimes/today
+     * Trả về danh sách suất chiếu trong ngày cùng số lượng vé đã soát
+     */
+    @GetMapping("/showtimes/today")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getTodayShowtimes() {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay   = startOfDay.plusDays(1);
+
+        List<Showtime> todayShowtimes = showtimeRepository
+                .findByStartTimeBetweenOrderByStartTimeAsc(startOfDay, endOfDay);
+
+        List<Map<String, Object>> result = todayShowtimes.stream().map(st -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id",          st.getId());
+            map.put("startTime",   st.getStartTime().toString());
+            map.put("endTime",     st.getEndTime().toString());
+            map.put("movieTitle",  st.getMovie().getTitle());
+            map.put("movieFormat", st.getMovie().getFormat());
+            map.put("screenName",  st.getScreen().getName());
+            map.put("basePrice",   st.getBasePrice());
+
+            // Đếm vé đã xác nhập (USED) trong suất này
+            long usedCount = ticketRepository.findAll().stream()
+                    .filter(t -> st.getId().equals(t.getShowtimeId())
+                             && t.getStatus() == TicketStatus.USED)
+                    .count();
+            map.put("scannedCount", usedCount);
+            return map;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
+    }
 
     @PostMapping("/verify-ticket")
     public ResponseEntity<?> verifyTicket(@RequestBody Map<String, Object> request) {
