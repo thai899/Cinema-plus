@@ -37,14 +37,17 @@ public class SecurityConfig {
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/ws-cinema/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
-                .requestMatchers("/api/movies/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/showtimes/**").permitAll() // GET xem ghế/suất chiếu là public
+                .requestMatchers("/api/movies/**").permitAll()                          // Public: danh sách phim
+                .requestMatchers("/api/admin/movies/**").hasAuthority("ROLE_ADMIN")     // Admin: CRUD phim
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/showtimes/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/manager/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
                 .requestMatchers("/api/analytics/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
                 .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/staff/showtimes/**").hasAnyAuthority("ROLE_STAFF", "ROLE_ADMIN", "ROLE_MANAGER")
                 .requestMatchers("/api/staff/**").hasAuthority("ROLE_STAFF")
+                .requestMatchers("/api/users/**").authenticated()                       // Yêu cầu đăng nhập, bất kỳ role
+                .requestMatchers("/api/bookings/**").authenticated()
                 .requestMatchers("/api/customer/**").hasAuthority("ROLE_CUSTOMER")
                 .anyRequest().authenticated()
             )

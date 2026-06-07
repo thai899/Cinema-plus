@@ -19,13 +19,16 @@ export default function HomePage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
   
-  // Dữ liệu phim tĩnh dự phòng cấu trúc lưới
-  const [movies] = useState([
-    { id: 1, title: 'Interstellar Journey', genre: 'Sci-Fi', rating: 8.8, duration: '2h 45m', image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500' },
-    { id: 2, title: 'Midnight City', genre: 'Action', rating: 7.5, duration: '1h 58m', image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500' },
-    { id: 3, title: 'The Quiet Shadow', genre: 'Drama', rating: 9.2, duration: '2h 10m', image: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=500' },
-    { id: 4, title: 'Labyrinthine', genre: 'Thriller', rating: 8.1, duration: '1h 45m', image: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=500' }
-  ]);
+  // Dữ liệu phim tĩnh dự phòng khi backend chưa có dữ liệu
+  const FALLBACK_MOVIES = [
+    { id: 1, title: 'Interstellar Journey', format: 'IMAX', duration: 165, posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500', description: 'Sci-Fi' },
+    { id: 2, title: 'Midnight City',        format: '2D',   duration: 118, posterUrl: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500', description: 'Action' },
+    { id: 3, title: 'The Quiet Shadow',     format: '3D',   duration: 130, posterUrl: 'https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=500', description: 'Drama' },
+    { id: 4, title: 'Labyrinthine',         format: '2D',   duration: 105, posterUrl: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=500', description: 'Thriller' }
+  ];
+
+  const [movies, setMovies] = useState(FALLBACK_MOVIES);
+  const [moviesLoading, setMoviesLoading] = useState(true);
 
   const [comingSoon] = useState([
     { id: 5, title: 'Desert Kings', genre: 'Adventure • Epic', date: 'OCT 24', image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500' },
@@ -66,10 +69,25 @@ export default function HomePage() {
     };
 
     checkAuthSession();
-    
+
     window.addEventListener('storage', checkAuthSession);
     return () => window.removeEventListener('storage', checkAuthSession);
-  }, [navigate]); 
+  }, [navigate]);
+
+  // Load phim từ API thật (public endpoint, không cần token)
+  useEffect(() => {
+    const loadMovies = async () => {
+      try {
+        const res = await axiosClient.get('/api/movies');
+        if (res.data && res.data.length > 0) setMovies(res.data);
+      } catch {
+        // Giữ fallback data tĩnh nếu backend chưa sẵn sàng
+      } finally {
+        setMoviesLoading(false);
+      }
+    };
+    loadMovies();
+  }, []);
 
   // Hàm xử lý kích hoạt cổng API Đăng nhập
   const handleDirectLogin = async (e) => {
@@ -226,9 +244,12 @@ export default function HomePage() {
                     </div>
                   )}
                 </div>
+                <button onClick={() => navigate('/profile')} className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-stone-300 hover:text-orange-300 transition-colors uppercase tracking-wider cursor-pointer">
+                  <Ticket size={14} /> Vé Của Tôi
+                </button>
                 <div className="flex items-center gap-2 bg-orange-300/10 border border-orange-300/30 px-4 py-2 rounded-xl">
                   <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-xs font-bold text-orange-300 uppercase font-mono">{username} (MEMBER)</span>
+                  <span className="text-xs font-bold text-orange-300 uppercase font-mono">{username}</span>
                 </div>
                 <button onClick={handleLogout} className="text-xs text-stone-400 hover:text-orange-300 uppercase font-bold tracking-wider cursor-pointer transition-colors">Thoát</button>
               </div>
@@ -292,8 +313,8 @@ export default function HomePage() {
                     <div className="flex items-center gap-3">
                       <Bookmark className="text-orange-300" size={18} />
                       <div>
-                        <span className="text-xs font-bold text-white block">Vé của tôi (Vé QR)</span>
-                        <span className="text-[10px] text-stone-400">Bạn đang có 1 suất chiếu sắp diễn ra</span>
+                        <span className="text-xs font-bold text-white block">Vé & Lịch Sử Đặt</span>
+                        <span className="text-[10px] text-stone-400">Xem QR vé và lịch sử booking của bạn</span>
                       </div>
                     </div>
                     <ArrowRight size={14} className="text-stone-400 group-hover:translate-x-1 transition-transform" />
@@ -303,11 +324,18 @@ export default function HomePage() {
                     <div className="flex items-center gap-3">
                       <CreditCard className="text-orange-300" size={18} />
                       <div>
-                        <span className="text-xs font-bold text-white block">Ví Voucher / Điểm tích lũy</span>
-                        <span className="text-[10px] text-stone-400">Số dư hiện tại: <span className="text-green-400 font-bold">450 điểm</span></span>
+                        <span className="text-xs font-bold text-white block">Điểm Tích Lũy & Thẻ Thành Viên</span>
+                        <span className="text-[10px] text-stone-400">Xem hạng thành viên và đặc quyền</span>
                       </div>
                     </div>
                     <ArrowRight size={14} className="text-stone-400 group-hover:translate-x-1 transition-transform" />
+                  </button>
+
+                  <button
+                    onClick={() => document.getElementById('movies-selection')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="w-full bg-orange-300 text-yellow-950 p-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-orange-400 transition-all cursor-pointer uppercase tracking-wider"
+                  >
+                    <Ticket size={14} fill="currentColor" /> ĐẶT VÉ NGAY
                   </button>
                 </div>
               </div>
@@ -355,24 +383,52 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 w-full">
-          {movies.map((m) => (
-            <div key={m.id} className="flex flex-col w-full">
-              <div className="w-full h-[380px] rounded-2xl overflow-hidden bg-neutral-800 border border-white/5 shadow-xl relative group">
-                <img className="w-full h-full object-cover" src={m.image} alt={m.title} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
-                <div className="absolute top-4 right-4 bg-neutral-900/80 border border-orange-300/10 backdrop-blur-sm px-2.5 py-1 rounded-lg flex items-center gap-1 text-orange-300 text-xs font-bold">
-                  <Star size={12} fill="currentColor" /><span>{m.rating}</span>
+          {moviesLoading
+            ? Array(4).fill(0).map((_, i) => (
+                <div key={i} className="flex flex-col w-full">
+                  <div className="w-full h-[380px] rounded-2xl bg-neutral-800/50 animate-pulse border border-white/5" />
+                  <div className="mt-4 space-y-2">
+                    <div className="h-5 bg-neutral-800 rounded-lg animate-pulse w-3/4" />
+                    <div className="h-3 bg-neutral-800 rounded-lg animate-pulse w-1/2" />
+                  </div>
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-neutral-900/95 border-t border-white/5 z-10">
-                  <button onClick={() => handleBookingRedirect(m.id)} className="w-full bg-orange-300 text-yellow-950 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1 text-xs cursor-pointer tracking-wider">GET TICKETS</button>
+              ))
+            : movies.map((m) => (
+              <div key={m.id} className="flex flex-col w-full">
+                <div className="w-full h-[380px] rounded-2xl overflow-hidden bg-neutral-800 border border-white/5 shadow-xl relative group">
+                  <img
+                    className="w-full h-full object-cover"
+                    src={m.posterUrl || m.image || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500'}
+                    alt={m.title}
+                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500'; }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
+                  {m.format && (
+                    <div className="absolute top-4 right-4 bg-neutral-900/80 border border-orange-300/20 backdrop-blur-sm px-2.5 py-1 rounded-lg text-orange-300 text-[10px] font-bold">
+                      {m.format}
+                    </div>
+                  )}
+                  {m.duration && (
+                    <div className="absolute top-4 left-4 bg-neutral-900/80 border border-white/10 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[10px] font-bold text-stone-300 font-mono">
+                      {Math.floor(m.duration / 60)}h{m.duration % 60 > 0 ? (m.duration % 60) + 'm' : ''}
+                    </div>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 p-5 translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-neutral-900/95 border-t border-white/5 z-10">
+                    <button
+                      onClick={() => handleBookingRedirect(m.id)}
+                      className="w-full bg-orange-300 text-yellow-950 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1 text-xs cursor-pointer tracking-wider hover:bg-orange-400 transition-colors"
+                    >
+                      ĐẶT VÉ NGAY
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-1">
+                  <h3 className="font-bold text-white text-base font-serif truncate">{m.title}</h3>
+                  <p className="text-stone-400 text-xs">{m.description || m.genre} {m.duration && `• ${Math.floor(m.duration/60)}h${m.duration%60>0?(m.duration%60)+'m':''}`}</p>
                 </div>
               </div>
-              <div className="mt-4 space-y-1">
-                <h3 className="font-bold text-white text-base font-serif truncate">{m.title}</h3>
-                <p className="text-stone-400 text-xs">{m.genre} • {m.duration}</p>
-              </div>
-            </div>
-          ))}
+            ))
+          }
         </div>
       </section>
 
