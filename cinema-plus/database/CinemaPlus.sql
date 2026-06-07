@@ -1,4 +1,4 @@
--- ============================================================================
+﻿-- ============================================================================
 -- 1. KHỞI TẠO CƠ SỞ DỮ LIỆU (Kiểm tra nếu chưa có mới tạo)
 -- ============================================================================
 IF NOT EXISTS (SELECT * FROM sys.databases WHERE name = 'CinemaPlusDB')
@@ -32,6 +32,7 @@ BEGIN
         phone VARCHAR(15) NULL,
         role_id BIGINT NOT NULL,
         status NVARCHAR(20) DEFAULT 'ACTIVE',
+        loyalty_points INT DEFAULT 0,
         created_at DATETIME DEFAULT GETDATE(),
         FOREIGN KEY (role_id) REFERENCES Roles(id)
     );
@@ -167,6 +168,30 @@ BEGIN
 
         FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
         FOREIGN KEY (seat_id) REFERENCES Seats(id)
+    );
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[FoodItems]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE FoodItems (
+        id BIGINT IDENTITY(1,1) PRIMARY KEY,
+        name NVARCHAR(100) NOT NULL,
+        price DECIMAL(10,2) NOT NULL,
+        image_url VARCHAR(500) NULL
+    );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[BookingFoods]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE BookingFoods (
+        id BIGINT IDENTITY(1,1) PRIMARY KEY,
+        booking_id BIGINT NOT NULL,
+        food_id BIGINT NOT NULL,
+        quantity INT NOT NULL,
+        price DECIMAL(10,2) NOT NULL,
+        FOREIGN KEY (booking_id) REFERENCES Bookings(id) ON DELETE CASCADE,
+        FOREIGN KEY (food_id) REFERENCES FoodItems(id)
     );
 END
 GO

@@ -1,11 +1,15 @@
 package com.cinemaplus.repositories;
 
 import com.cinemaplus.entities.Booking;
-import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
-public interface BookingRepository
-        extends JpaRepository<Booking,Long> {
+import java.util.List;
+
+@Repository
+public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("""
         SELECT COALESCE(SUM(b.totalAmount),0)
@@ -13,4 +17,19 @@ public interface BookingRepository
         WHERE b.paymentStatus='PAID'
     """)
     Double sumRevenue();
+
+    @Query("SELECT DISTINCT b FROM Booking b " +
+           "LEFT JOIN FETCH b.showtime s " +
+           "LEFT JOIN FETCH s.movie " +
+           "LEFT JOIN FETCH s.screen sc " +
+           "LEFT JOIN FETCH sc.cinema " +
+           "WHERE b.user.id = :userId " +
+           "ORDER BY b.bookingTime DESC")
+    List<Booking> findByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT DISTINCT b FROM Booking b " +
+           "LEFT JOIN FETCH b.showtime s " +
+           "LEFT JOIN FETCH s.movie " +
+           "WHERE b.paymentStatus = 'PAID'")
+    List<Booking> findAllPaidWithDetails();
 }

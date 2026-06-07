@@ -7,6 +7,9 @@ import RegisterPage from './pages/RegisterPage';
 import StaffTerminal from "./pages/staff/StaffScanner"; 
 import ManagerDashboard from "./pages/manager/ManagerDashboard"; 
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import SeatSelectionPage from "./pages/customer/SeatSelectionPage";
+import ShowtimeSelectionPage from "./pages/customer/ShowtimeSelectionPage";
+import ProfilePage from "./pages/customer/ProfilePage";
 
 const RoleBasedGuard = ({ children, allowedRoles }) => {
   const token = localStorage.getItem('token');
@@ -34,6 +37,17 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/customer/seats" element={<SeatSelectionPage />}/>
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/movie/:movieId/showtimes" element={
+          <RoleBasedGuard allowedRoles={['ROLE_CUSTOMER']}>
+            <ShowtimeSelectionPage />
+          </RoleBasedGuard>
+        } />
+        <Route path="/showtime/:showtimeId/seats" element={<SeatSelectionPage />} />
+        <Route path="/profile" element={
+          <RoleBasedGuard allowedRoles={['ROLE_CUSTOMER']}>
+            <ProfilePage />
+          </RoleBasedGuard>
+        } />
 
         {/* Các trang quản trị điều hành giữ nguyên bảo vệ Guard */}
         <Route path="/admin-dashboard" element={

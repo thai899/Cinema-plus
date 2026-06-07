@@ -37,6 +37,9 @@ public class SecurityConfig {
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/ws-cinema/**").permitAll() // Cho phép kết nối WebSocket không chặn JWT
                 .requestMatchers("/uploads/**").permitAll()  // Cho phép xem ảnh bìa phim công khai
+                .requestMatchers("/api/movies/**").permitAll() // Cho phép xem danh sách phim công khai
+                .requestMatchers("/api/showtimes/**").permitAll() // Cho phép xem suất chiếu & ghế công khai
+                .requestMatchers("/error").permitAll() // Cho phép xem chi tiết lỗi server
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers("/api/manager/**").hasAuthority("ROLE_MANAGER")
                 .requestMatchers("/api/staff/**").hasAuthority("ROLE_STAFF")

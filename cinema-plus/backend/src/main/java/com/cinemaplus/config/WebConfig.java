@@ -23,4 +23,12 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations("file:uploads/");
     }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private ApiTrafficInterceptor apiTrafficInterceptor;
+
+    @Override
+    public void addInterceptors(org.springframework.web.servlet.config.annotation.InterceptorRegistry registry) {
+        registry.addInterceptor(apiTrafficInterceptor);
+    }
 }
