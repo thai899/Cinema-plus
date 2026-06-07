@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   
   // Navigation & Sub-views tabs
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'movies', 'screens'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'movies', 'screens', 'showtimes', 'staff'
 
   // ==========================================
   // STATE DEFINITIONS
@@ -60,6 +60,20 @@ export default function AdminDashboard() {
   const [newScreenName, setNewScreenName] = useState('');
   const [selectedCinemaId, setSelectedCinemaId] = useState(1);
 
+  // Tab 4: Showtime Management States
+  const [showtimes, setShowtimes] = useState([]);
+  const [showAddShowtimeModal, setShowAddShowtimeModal] = useState(false);
+  const [showtimeForm, setShowtimeForm] = useState({
+    movieId: '', screenId: '', startTime: '', basePrice: ''
+  });
+
+  // Tab 5: Create Staff/Manager States
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [newUserForm, setNewUserForm] = useState({
+    username: '', password: '', email: '', fullName: '', phone: '', roleName: 'ROLE_STAFF'
+  });
+  const [changingRole, setChangingRole] = useState(null); // userId being changed
+
   // ==========================================
   // REAL-TIME WEBSOCKET (STOMP) & INITIAL LOADS
   // ==========================================
@@ -68,6 +82,7 @@ export default function AdminDashboard() {
     fetchUsers();
     fetchMovies();
     fetchScreens();
+    fetchShowtimes();
 
     // 2. Establish live WebSocket STOMP connection for real-time audit logs
     const socket = new SockJS('http://localhost:8081/ws-cinema');
@@ -136,6 +151,15 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchShowtimes = async () => {
+    try {
+      const res = await axiosClient.get('/api/admin/showtimes');
+      if (res.data) setShowtimes(res.data);
+    } catch (error) {
+      console.error("Nạp danh sách suất chiếu thất bại:", error);
+    }
+  };
+
   const fetchMovies = async () => {
     try {
       const res = await axiosClient.get('/api/admin/movies');
@@ -167,6 +191,61 @@ export default function AdminDashboard() {
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, status: newStatus } : u));
     } catch (err) {
       alert("Cập nhật trạng thái người dùng thất bại! Đảm bảo quyền admin.");
+    }
+  };
+
+  // Change user role
+  const handleChangeRole = async (userId, newRole) => {
+    try {
+      await axiosClient.put(`/api/admin/users/${userId}/role`, { roleName: newRole });
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: { name: newRole } } : u));
+      setChangingRole(null);
+    } catch (err) {
+      alert("Đổi quyền thất bại!");
+    }
+  };
+
+  // Create new staff account
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    try {
+      await axiosClient.post('/api/admin/users', newUserForm);
+      alert(`✅ Tạo tài khoản ${newUserForm.username} (${newUserForm.roleName}) thành công!`);
+      setShowCreateUserModal(false);
+      setNewUserForm({ username: '', password: '', email: '', fullName: '', phone: '', roleName: 'ROLE_STAFF' });
+      fetchUsers();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Tạo tài khoản thất bại!');
+    }
+  };
+
+  // Showtime handlers
+  const handleAddShowtime = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        movieId:   parseInt(showtimeForm.movieId),
+        screenId:  parseInt(showtimeForm.screenId),
+        startTime: showtimeForm.startTime,   // ISO string from datetime-local
+        basePrice: parseFloat(showtimeForm.basePrice)
+      };
+      await axiosClient.post('/api/admin/showtimes', payload);
+      alert('✅ Tạo suất chiếu thành công!');
+      setShowAddShowtimeModal(false);
+      setShowtimeForm({ movieId: '', screenId: '', startTime: '', basePrice: '' });
+      fetchShowtimes();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Tạo suất chiếu thất bại! Kiểm tra lại lịch phòng chiếu.');
+    }
+  };
+
+  const handleDeleteShowtime = async (id) => {
+    if (!window.confirm('Bạn có chắc muốn xóa suất chiếu này?')) return;
+    try {
+      await axiosClient.delete(`/api/admin/showtimes/${id}`);
+      setShowtimes(prev => prev.filter(s => s.id !== id));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Không thể xóa suất chiếu này!');
     }
   };
 
@@ -370,6 +449,26 @@ export default function AdminDashboard() {
             <span className="text-sm">Cấu Hình Phòng & Ghế</span>
           </button>
 
+          <button 
+            onClick={() => setActiveTab('showtimes')} 
+            className={`w-full rounded-xl flex items-center p-3.5 font-bold cursor-pointer transition-all text-left ${
+              activeTab === 'showtimes' ? 'bg-[#e9c176] text-[#261900] shadow-md' : 'text-[#d1c5b4] hover:bg-[#353535]/50 hover:text-[#e9c176]'
+            }`}
+          >
+            <Calendar className="mr-3 shrink-0" size={18} />
+            <span className="text-sm">Quản Lý Suất Chiếu</span>
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('staff')} 
+            className={`w-full rounded-xl flex items-center p-3.5 font-bold cursor-pointer transition-all text-left ${
+              activeTab === 'staff' ? 'bg-[#e9c176] text-[#261900] shadow-md' : 'text-[#d1c5b4] hover:bg-[#353535]/50 hover:text-[#e9c176]'
+            }`}
+          >
+            <UserPlus className="mr-3 shrink-0" size={18} />
+            <span className="text-sm">Quản Lý Nhân Sự</span>
+          </button>
+
           <div className="pt-8 mt-auto space-y-1">
             <button className="w-full text-[#d1c5b4] hover:bg-[#353535]/50 rounded-xl flex items-center p-3.5 text-sm font-medium text-left cursor-pointer transition-colors">
               <Settings className="mr-3 shrink-0" size={18} />
@@ -411,6 +510,8 @@ export default function AdminDashboard() {
               {activeTab === 'dashboard' && "Hệ Thống Kiểm Soát Chung"}
               {activeTab === 'movies' && "Hệ Thống Quản Lý Phim"}
               {activeTab === 'screens' && "Cấu Hình Sơ Đồ Phòng Chiếu"}
+              {activeTab === 'showtimes' && "Quản Lý & Phân Bổ Suất Chiếu"}
+              {activeTab === 'staff' && "Quản Lý Tài Khoản Nhân Sự"}
             </h2>
           </div>
           <div className="flex items-center gap-4 md:gap-6 shrink-0">
@@ -491,7 +592,7 @@ export default function AdminDashboard() {
                   <div className="p-5 border-b border-[#4e4639]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                       <h3 className="text-base font-bold text-white font-serif tracking-wide">Quản Lý Trạng Thái Tài Khoản (SQL Server)</h3>
-                      <p className="text-[11px] text-[#9a8f80] mt-0.5">Khóa/Mở khóa tức thời tài khoản thông qua Secure API Patch</p>
+                      <p className="text-[11px] text-[#9a8f80] mt-0.5">Khóa/Mở khóa, Đổi quyền tài khoản thông qua Secure API</p>
                     </div>
                   </div>
 
@@ -502,6 +603,7 @@ export default function AdminDashboard() {
                           <th className="px-6 py-3.5">Người Dùng</th>
                           <th className="px-6 py-3.5">Quyền Hạn</th>
                           <th className="px-6 py-3.5">Trạng Thái</th>
+                          <th className="px-6 py-3.5 text-center">Đổi Quyền</th>
                           <th className="px-6 py-3.5 text-center">Bảo Mật</th>
                         </tr>
                       </thead>
@@ -534,6 +636,29 @@ export default function AdminDashboard() {
                                 <span className={`w-1.5 h-1.5 rounded-full ${"ACTIVE".equalsIgnoreCase(user.status) ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]' : 'bg-red-500 animate-pulse'}`}></span>
                                 <span className="text-xs font-medium">{"ACTIVE".equalsIgnoreCase(user.status) ? 'Hoạt động' : 'Đã Khóa'}</span>
                               </div>
+                            </td>
+                            <td className="px-6 py-3.5 text-center">
+                              {changingRole === user.id ? (
+                                <select
+                                  className="bg-[#131313] border border-[#e9c176]/40 text-[#e9c176] text-[10px] rounded-lg px-2 py-1 outline-none"
+                                  defaultValue={typeof user.role === 'object' ? user.role.name : user.role}
+                                  onChange={(e) => handleChangeRole(user.id, e.target.value)}
+                                  onBlur={() => setChangingRole(null)}
+                                  autoFocus
+                                >
+                                  <option value="ROLE_STAFF">STAFF</option>
+                                  <option value="ROLE_MANAGER">MANAGER</option>
+                                  <option value="ROLE_CUSTOMER">CUSTOMER</option>
+                                </select>
+                              ) : (
+                                <button
+                                  onClick={() => setChangingRole(user.id)}
+                                  className="px-2 py-1 rounded-lg text-[9px] font-bold border border-[#4e4639]/50 text-[#9a8f80] hover:border-[#e9c176]/40 hover:text-[#e9c176] transition-colors cursor-pointer"
+                                  title="Click để đổi quyền"
+                                >
+                                  <Edit2 size={10} />
+                                </button>
+                              )}
                             </td>
                             <td className="px-6 py-3.5 text-center">
                               <button 
@@ -1090,6 +1215,144 @@ export default function AdminDashboard() {
                   className="bg-[#e9c176] text-[#261900] rounded-xl px-4 py-2 font-bold hover:bg-[#d9b166] cursor-pointer text-xs"
                 >
                   TẠO PHÒNG CHIẾU
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Add Showtime Modal */}
+      {showAddShowtimeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="bg-[#1f2020] border border-[#e9c176]/20 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-5 border-b border-[#4e4639]/30 bg-[#131313]/30 flex justify-between items-center">
+              <h3 className="text-base font-bold text-white font-serif">⏰ Tạo Suất Chiếu Mới</h3>
+              <button onClick={() => setShowAddShowtimeModal(false)} className="text-stone-400 hover:text-white cursor-pointer">✕</button>
+            </div>
+            <form onSubmit={handleAddShowtime} className="p-5 space-y-4 text-xs">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-[#9a8f80] uppercase block">Chọn Phim</label>
+                <select
+                  required
+                  className="w-full bg-[#131313] border border-[#4e4639]/70 rounded-xl px-4 py-2.5 text-white outline-none focus:border-[#e9c176]"
+                  value={showtimeForm.movieId}
+                  onChange={(e) => setShowtimeForm(prev => ({ ...prev, movieId: e.target.value }))}
+                >
+                  <option value="">-- Chọn phim --</option>
+                  {movies.map(m => (
+                    <option key={m.id} value={m.id}>{m.title} ({m.duration} phút)</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-[#9a8f80] uppercase block">Chọn Phòng Chiếu</label>
+                <select
+                  required
+                  className="w-full bg-[#131313] border border-[#4e4639]/70 rounded-xl px-4 py-2.5 text-white outline-none focus:border-[#e9c176]"
+                  value={showtimeForm.screenId}
+                  onChange={(e) => setShowtimeForm(prev => ({ ...prev, screenId: e.target.value }))}
+                >
+                  <option value="">-- Chọn phòng --</option>
+                  {screens.map(s => (
+                    <option key={s.id} value={s.id}>{s.name} (ID: {s.id})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-[#9a8f80] uppercase block">Giờ Bắt Đầu</label>
+                <input
+                  type="datetime-local"
+                  required
+                  className="w-full bg-[#131313] border border-[#4e4639]/70 rounded-xl px-4 py-2.5 text-white outline-none focus:border-[#e9c176]"
+                  value={showtimeForm.startTime}
+                  onChange={(e) => setShowtimeForm(prev => ({ ...prev, startTime: e.target.value }))}
+                />
+                <p className="text-[10px] text-[#9a8f80]">⚡ Hệ thống tự tính giờ kết thúc = Bắt đầu + Thời lượng phim + 15 phút nghỉ</p>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-[#9a8f80] uppercase block">Giá Vé Cơ Bản (đ)</label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="1000"
+                  placeholder="Ví dụ: 120000"
+                  className="w-full bg-[#131313] border border-[#4e4639]/70 rounded-xl px-4 py-2.5 text-white outline-none focus:border-[#e9c176]"
+                  value={showtimeForm.basePrice}
+                  onChange={(e) => setShowtimeForm(prev => ({ ...prev, basePrice: e.target.value }))}
+                />
+              </div>
+              <div className="pt-3 border-t border-[#4e4639]/20 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowAddShowtimeModal(false)}
+                  className="bg-[#353535] hover:bg-[#404040] text-white rounded-xl px-4 py-2 cursor-pointer text-xs font-semibold">
+                  HỦY
+                </button>
+                <button type="submit"
+                  className="bg-[#e9c176] text-[#261900] rounded-xl px-5 py-2 font-bold hover:bg-[#d9b166] cursor-pointer text-xs">
+                  TẠO SUẤT CHIẾU
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Create Staff/Manager Account Modal */}
+      {showCreateUserModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="bg-[#1f2020] border border-[#e9c176]/20 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="p-5 border-b border-[#4e4639]/30 bg-[#131313]/30 flex justify-between items-center">
+              <h3 className="text-base font-bold text-white font-serif">👤 Cấp Phát Tài Khoản Nhân Sự</h3>
+              <button onClick={() => setShowCreateUserModal(false)} className="text-stone-400 hover:text-white cursor-pointer">✕</button>
+            </div>
+            <form onSubmit={handleCreateUser} className="p-5 space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-[#9a8f80] uppercase block">Tên đăng nhập</label>
+                  <input required className="w-full bg-[#131313] border border-[#4e4639]/70 rounded-xl px-3 py-2 text-white outline-none focus:border-[#e9c176]"
+                    value={newUserForm.username} onChange={(e) => setNewUserForm(p => ({ ...p, username: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-[#9a8f80] uppercase block">Mật khẩu</label>
+                  <input required type="password" className="w-full bg-[#131313] border border-[#4e4639]/70 rounded-xl px-3 py-2 text-white outline-none focus:border-[#e9c176]"
+                    value={newUserForm.password} onChange={(e) => setNewUserForm(p => ({ ...p, password: e.target.value }))} />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-[#9a8f80] uppercase block">Họ và tên</label>
+                <input required className="w-full bg-[#131313] border border-[#4e4639]/70 rounded-xl px-3 py-2 text-white outline-none focus:border-[#e9c176]"
+                  value={newUserForm.fullName} onChange={(e) => setNewUserForm(p => ({ ...p, fullName: e.target.value }))} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-[#9a8f80] uppercase block">Email</label>
+                <input required type="email" className="w-full bg-[#131313] border border-[#4e4639]/70 rounded-xl px-3 py-2 text-white outline-none focus:border-[#e9c176]"
+                  value={newUserForm.email} onChange={(e) => setNewUserForm(p => ({ ...p, email: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-[#9a8f80] uppercase block">Số điện thoại</label>
+                  <input className="w-full bg-[#131313] border border-[#4e4639]/70 rounded-xl px-3 py-2 text-white outline-none focus:border-[#e9c176]"
+                    value={newUserForm.phone} onChange={(e) => setNewUserForm(p => ({ ...p, phone: e.target.value }))} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-[#9a8f80] uppercase block">Phân Quyền</label>
+                  <select className="w-full bg-[#131313] border border-[#4e4639]/70 rounded-xl px-3 py-2 text-white outline-none focus:border-[#e9c176]"
+                    value={newUserForm.roleName} onChange={(e) => setNewUserForm(p => ({ ...p, roleName: e.target.value }))}>
+                    <option value="ROLE_STAFF">STAFF (Nhân viên)</option>
+                    <option value="ROLE_MANAGER">MANAGER (Quản lý)</option>
+                    <option value="ROLE_CUSTOMER">CUSTOMER (Khách hàng)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="pt-3 border-t border-[#4e4639]/20 flex justify-end gap-3">
+                <button type="button" onClick={() => setShowCreateUserModal(false)}
+                  className="bg-[#353535] hover:bg-[#404040] text-white rounded-xl px-4 py-2 cursor-pointer text-xs font-semibold">
+                  HỦY
+                </button>
+                <button type="submit"
+                  className="bg-[#e9c176] text-[#261900] rounded-xl px-5 py-2 font-bold hover:bg-[#d9b166] cursor-pointer text-xs">
+                  CẤP PHÁT TÀI KHOẢN
                 </button>
               </div>
             </form>

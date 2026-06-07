@@ -46,8 +46,9 @@ public class AuditLogAspect {
             HttpServletRequest request = attributes.getRequest();
             String uri = request.getRequestURI();
 
-            // Chỉ ghi nhận log và broadcast các thay đổi dưới namespace quản trị /api/admin hoặc /api/manager
-            if (uri.startsWith("/api/admin") || uri.startsWith("/api/manager")) {
+            // Ghi nhận log và broadcast cho tất cả namespace quan trọng
+            if (uri.startsWith("/api/admin") || uri.startsWith("/api/manager")
+                    || uri.startsWith("/api/staff") || uri.startsWith("/api/bookings")) {
                 String username = "ANONYMOUS";
                 if (SecurityContextHolder.getContext().getAuthentication() != null) {
                     username = SecurityContextHolder.getContext().getAuthentication().getName();

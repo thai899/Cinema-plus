@@ -35,13 +35,14 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/ws-cinema/**").permitAll() // Cho phép kết nối WebSocket không chặn JWT
-                .requestMatchers("/uploads/**").permitAll()  // Cho phép xem ảnh bìa phim công khai
-                .requestMatchers("/api/movies/**").permitAll() // Cho phép xem danh sách phim công khai
-                .requestMatchers("/api/showtimes/**").permitAll() // Cho phép xem suất chiếu & ghế công khai
-                .requestMatchers("/error").permitAll() // Cho phép xem chi tiết lỗi server
+                .requestMatchers("/ws-cinema/**").permitAll()
+                .requestMatchers("/uploads/**").permitAll()
+                .requestMatchers("/api/movies/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/showtimes/**").permitAll() // GET xem ghế/suất chiếu là public
+                .requestMatchers("/error").permitAll()
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/manager/**").hasAuthority("ROLE_MANAGER")
+                .requestMatchers("/api/manager/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
+                .requestMatchers("/api/analytics/**").hasAnyAuthority("ROLE_MANAGER", "ROLE_ADMIN")
                 .requestMatchers("/api/staff/**").hasAuthority("ROLE_STAFF")
                 .requestMatchers("/api/customer/**").hasAuthority("ROLE_CUSTOMER")
                 .anyRequest().authenticated()

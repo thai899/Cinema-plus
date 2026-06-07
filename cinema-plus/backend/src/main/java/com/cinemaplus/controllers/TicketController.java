@@ -47,7 +47,12 @@ public class TicketController {
             return ResponseEntity.badRequest().body(Map.of("status", "INVALID", "message", "Vé sai cổng hoặc sai suất chiếu!"));
         }
 
-        // Trường hợp 3: Vé đã quét vào cửa từ trước (Chống quay vòng vé)
+        // Trường hợp 3: Đơn hàng chưa thanh toán — KHÔNG cho vào
+        if (ticket.getBooking() != null && !"PAID".equals(ticket.getBooking().getPaymentStatus())) {
+            return ResponseEntity.badRequest().body(Map.of("status", "INVALID", "message", "Vé thuộc đơn hàng chưa hoàn tất thanh toán!"));
+        }
+
+        // Trường hợp 4: Vé đã quét vào cửa từ trước (Chống quay vòng vé)
         if (ticket.getStatus() == TicketStatus.USED) {
             return ResponseEntity.badRequest().body(Map.of("status", "USED", "message", "Cảnh báo: Vé này đã được sử dụng trước đó!"));
         }
