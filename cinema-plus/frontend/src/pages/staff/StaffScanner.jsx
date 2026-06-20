@@ -550,16 +550,25 @@ export default function StaffScanner() {
                   HỦY
                 </button>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (!incidentText.trim()) return;
-                    pushLog({
-                      type: 'AUDIT',
-                      msg: `[BÁO SỰ CỐ] ${staffName}: ${incidentText}`,
-                      icon: <AlertTriangle size={14} className="text-red-400" />
-                    });
-                    setIncidentText('');
-                    setShowIncidentModal(false);
-                    alert('✅ Báo cáo sự cố đã được ghi nhận vào nhật ký hệ thống!');
+                    try {
+                      await axiosClient.post('/staff/incident', {
+                        staffName: staffName,
+                        message: incidentText,
+                        showtimeId: selectedShowtime?.id || null
+                      });
+                      pushLog({
+                        type: 'AUDIT',
+                        msg: `[BÁO SỰ CỐ] ${staffName}: ${incidentText}`,
+                        icon: <AlertTriangle size={14} className="text-red-400" />
+                      });
+                      setIncidentText('');
+                      setShowIncidentModal(false);
+                      alert('✅ Báo cáo sự cố đã được gửi lên hệ thống và Admin đã nhận được!');
+                    } catch (err) {
+                      alert('❌ Gửi báo cáo thất bại! ' + (err.response?.data?.error || ''));
+                    }
                   }}
                   className="bg-red-500 text-white rounded-xl px-5 py-2 font-bold text-xs cursor-pointer hover:bg-red-600"
                 >

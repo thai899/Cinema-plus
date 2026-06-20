@@ -114,4 +114,41 @@ public class TicketController {
 
         return ResponseEntity.ok(responseData);
     }
+
+    /**
+     * POST /api/staff/incident
+     * Nhân viên báo sự cố tại cổng soát vé — broadcast qua WebSocket để Admin thấy real-time
+     */
+    @PostMapping("/incident")
+    public ResponseEntity<?> reportIncident(@RequestBody Map<String, Object> request) {
+        String staffName = (String) request.getOrDefault("staffName", "Nhân viên");
+        String message   = (String) request.getOrDefault("message", "");
+        Object showtimeId = request.get("showtimeId");
+
+        if (message == null || message.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Nội dung sự cố không được để trống!"));
+        }
+
+        // Broadcast sự cố qua WebSocket /topic/logs để Admin Dashboard nhận real-time
+        Map<String, Object> logPayload = new java.util.HashMap<>();
+        logPayload.put("username", staffName);
+        logPayload.put("httpMethod", "INCIDENT");
+        logPayload.put("uri", "/api/staff/incident");
+        logPayload.put("actionName", "⚠️ BÁO SỰ CỐ: " + message);
+        logPayload.put("timestamp", java.time.LocalDateTime.now().toString());
+        logPayload.put("details", "Suất chiếu: " + (showtimeId != null ? showtimeId : "N/A"));
+
+        messagingTemplate.convertAndSend("/topic/logs", logPayload);
+
+        System.out.println("=================================================");
+        System.out.println("🚨 [INCIDENT] Staff: " + staffName);
+        System.out.println("   Nội dung: " + message);
+        System.out.println("   Suất chiếu: " + showtimeId);
+        System.out.println("=================================================");
+
+        return ResponseEntity.ok(Map.of(
+            "message", "Báo cáo sự cố đã được gửi và broadcast thành công!",
+            "staff", staffName
+        ));
+    }
 }

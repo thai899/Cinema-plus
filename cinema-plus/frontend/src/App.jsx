@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import StaffTerminal from "./pages/staff/StaffScanner"; 
-import ManagerDashboard from "./pages/manager/ManagerDashboard"; 
+import StaffTerminal from "./pages/staff/StaffScanner";
+import ManagerDashboard from "./pages/manager/ManagerDashboard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import SeatSelectionPage from "./pages/customer/SeatSelectionPage";
 import ShowtimeSelectionPage from "./pages/customer/ShowtimeSelectionPage";
@@ -30,7 +30,7 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        {/* 🟢 KHẮC PHỤC CHÍ MẠNG: Cho phép cả khách chưa login lẫn khách đã login đều ở chung trang chủ "/" */}
+        {/* Cho phép cả khách chưa login lẫn khách đã login đều ở chung trang chủ "/" */}
         <Route path="/" element={<HomePage />} />
 
         <Route path="/login" element={<LoginPage />} />
@@ -53,13 +53,13 @@ export default function App() {
             <AdminDashboard />
           </RoleBasedGuard>
         } />
-        
+
         <Route path="/manager-dashboard" element={
           <RoleBasedGuard allowedRoles={['ROLE_MANAGER']}>
             <ManagerDashboard />
           </RoleBasedGuard>
         } />
-        
+
         <Route path="/staff-scanner" element={
           <RoleBasedGuard allowedRoles={['ROLE_STAFF']}>
             <StaffTerminal />
