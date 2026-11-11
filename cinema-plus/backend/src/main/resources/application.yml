@@ -1,0 +1,168 @@
+# ============================================================
+#  Cinema Plus – Spring Boot 3.x  |  application.yml
+#  Multi-datasource: SQL Server · Redis · MongoDB · Neo4j
+#  ✅ Production-ready: env-var secrets, ddl-auto=validate
+# ============================================================
+
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: cinema-plus-backend
+
+  # ──────────────────────────────────────────────────────────
+  # 1. SQL SERVER  (Core relational: Users, Movies, Rooms,
+  #                Seats, Showtimes, Bookings, Tickets)
+  # ──────────────────────────────────────────────────────────
+  datasource:
+    url: ${DB_URL:jdbc:sqlserver://localhost:1433;databaseName=CinemaPlusDB;encrypt=true;trustServerCertificate=true;loginTimeout=30;}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:123}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    hikari:
+      pool-name: SQLServerPool
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000          # 30 s
+      connection-timeout: 20000    # 20 s
+      max-lifetime: 1800000        # 30 min
+      connection-test-query: SELECT 1
+
+  jpa:
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}   # 'update' locally via env var, 'validate' in prod
+    show-sql: ${JPA_SHOW_SQL:false}
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.SQLServerDialect
+        jdbc:
+          batch_size: 30
+        order_inserts: true
+        order_updates: true
+
+  # ──────────────────────────────────────────────────────────
+  # 2. REDIS  (Distributed seat-locking + Caching)
+  # ──────────────────────────────────────────────────────────
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}       # empty = no auth (local dev)
+      database: ${REDIS_DATABASE:0}
+      timeout: 2000ms
+      connect-timeout: 2000ms
+      lettuce:
+        pool:
+          enabled: true
+          min-idle: 2
+          max-idle: 8
+          max-active: 16
+          max-wait: 1000ms
+        shutdown-timeout: 200ms
+
+    # ────────────────────────────────────────────────────────
+    # 3. MONGODB  (Collection: MovieReviews – reviews & comments)
+    # ────────────────────────────────────────────────────────
+    mongodb:
+      host: ${MONGO_HOST:localhost}
+      port: ${MONGO_PORT:27017}
+      database: ${MONGO_DATABASE:CinemaPlusReviews}
+      username: ${MONGO_USERNAME:cinemaUser}
+      password: ${MONGO_PASSWORD:cinemaPass}
+      authentication-database: ${MONGO_AUTH_DB:admin}
+      # Full URI override (env var takes precedence when set):
+      # uri: ${MONGO_URI:}
+      auto-index-creation: true
+
+    # ────────────────────────────────────────────────────────
+    # 4. NEO4J  (Smart movie recommendation graph)
+    # ────────────────────────────────────────────────────────
+    neo4j:
+      uri: ${NEO4J_URI:bolt://localhost:7687}
+      authentication:
+        username: ${NEO4J_USERNAME:neo4j}
+        password: ${NEO4J_PASSWORD:cinemaPlus123}
+      connection-timeout: 5s
+      max-transaction-retry-time: 15s
+
+  # ──────────────────────────────────────────────────────────
+  # Cache  (Spring Cache abstraction → backed by Redis)
+  # ──────────────────────────────────────────────────────────
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000         # default TTL: 10 min (ms)
+      cache-null-values: false
+      use-key-prefix: true
+      key-prefix: "cinemaplus:"
+
+  # ──────────────────────────────────────────────────────────
+  # Auto-configuration exclusions
+  # ──────────────────────────────────────────────────────────
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.h2.H2ConsoleAutoConfiguration
+
+# ──────────────────────────────────────────────────────────
+# Security / JWT
+# ──────────────────────────────────────────────────────────
+cinema:
+  app:
+    jwtSecret: ${JWT_SECRET:cinemaPlusSecretKey2024SuperSecure_changeInProd!}
+    jwtExpirationMs: ${JWT_EXPIRATION_MS:86400000}   # default 24 h
+
+# ──────────────────────────────────────────────────────────
+# Seat Lock settings  (used by SeatLockService)
+# ──────────────────────────────────────────────────────────
+seat:
+  lock:
+    ttl-seconds: ${SEAT_LOCK_TTL:300}   # hold seat for 5 min
+
+# ──────────────────────────────────────────────────────────
+# Logging
+# ──────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.cinemaplus: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.data.mongodb: DEBUG
+    org.springframework.data.neo4j: DEBUG
+    org.springframework.cache: DEBUG
+    io.lettuce: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# ──────────────────────────────────────────────────────────
+# Actuator  (health checks for all datastores)
+# ──────────────────────────────────────────────────────────
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, caches
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+  health:
+    redis:
+      enabled: true
+    mongo:
+      enabled: true
+    neo4j:
+      enabled: true
+    db:
+      enabled: true
+
+# ──────────────────────────────────────────────────────────
+# Error handling
+# ──────────────────────────────────────────────────────────
+server:
+  error:
+    include-message: always
+    include-stacktrace: on_param
+
