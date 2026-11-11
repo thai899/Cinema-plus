@@ -38,6 +38,8 @@ public class SecurityConfig {
                 .requestMatchers("/ws-cinema/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/api/movies/**").permitAll()                          // Public: danh sách phim
+                .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/reviews/movies/**").permitAll()  // Public: xem review & stats
+                .requestMatchers("/api/reviews/**").authenticated()                     // Tạo/sửa/xóa review cần đăng nhập
                 .requestMatchers("/api/admin/movies/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")     // Admin/Manager: CRUD phim
                 .requestMatchers("/api/admin/showtimes/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")  // Admin/Manager: CRUD showtimes
                 .requestMatchers("/api/admin/screens/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_MANAGER")    // Admin/Manager: CRUD screens
